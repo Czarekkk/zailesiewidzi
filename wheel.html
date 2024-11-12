@@ -133,47 +133,30 @@
 
             const wheel = document.getElementById('wheel');
             
-            // Calculate initial natural spin
+            // Calculate spin
             const fullRotations = 4 * 360; // 4 full spins
             const prizeAngle = 72; // 360 / 5 prizes = 72 degrees per prize
             
-            // Include Porsche in initial random selection
-            const initialPrizeIndex = Math.floor(Math.random() * 5);
-            const randomOffset = Math.random() * 20 - 10;
-            const initialRotation = -(fullRotations + (initialPrizeIndex * prizeAngle) + randomOffset);
+            // Select a random prize (excluding Porsche)
+            const selectedPrizeIndex = Math.floor(Math.random() * 4); // 0-3 only
+            const randomOffset = Math.random() * 20 - 10; // Small random offset for realism
             
-            // Start the natural spin
-            wheel.style.transform = `rotate(${initialRotation}deg)`;
+            // Calculate final rotation (negative because we're spinning counterclockwise)
+            const finalRotation = -(fullRotations + (selectedPrizeIndex * prizeAngle) + randomOffset);
+            
+            // Apply the spin
+            wheel.style.transform = `rotate(${finalRotation}deg)`;
 
+            // Show result after spin completes
             setTimeout(() => {
-                // If it naturally landed on Porsche (index 4), make the obvious cheat move
-                if (initialPrizeIndex === 4) {
-                    // Pick a new random prize (excluding Porsche)
-                    const newPrizeIndex = Math.floor(Math.random() * 4);
-                    const cheatRotation = -(fullRotations + (newPrizeIndex * prizeAngle));
-                    
-                    // Quick "cheat" movement
-                    wheel.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.0)';
-                    wheel.style.transform = `rotate(${cheatRotation}deg)`;
-                    
-                    setTimeout(() => {
-                        showResult(newPrizeIndex, true);
-                        // Reset transition for next spin
-                        wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-                    }, 500);
-                } else {
-                    showResult(initialPrizeIndex, false);
-                }
+                showResult(selectedPrizeIndex);
             }, 4000);
         }
 
-        function showResult(prizeIndex, didCheat) {
+        function showResult(prizeIndex) {
             const modal = document.getElementById('resultModal');
             const prizeText = document.getElementById('prizeText');
-            
-            // Only add the cheeky message if we had to cheat
-            const extraMessage = didCheat ? ' (Porsche akurat w serwisie 😅)' : '!';
-            prizeText.textContent = `Wygrywasz: ${prizes[prizeIndex]}${extraMessage}`;
+            prizeText.textContent = `Wygrywasz: ${prizes[prizeIndex]}!`;
             modal.style.display = 'block';
 
             if (prizeIndex === 2) { // Message option
