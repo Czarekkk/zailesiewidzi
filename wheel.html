@@ -61,7 +61,7 @@
             padding-left: 20px;
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            font-size: 14px;
+            font-size: 12px; /* Adjusted for better fit */
             line-height: 1.2;
         }
 
@@ -102,11 +102,11 @@
     <div class="wheel-container">
         <div class="pointer">▼</div>
         <div class="wheel" id="wheel">
-            <div class="option" style="transform: rotate(0deg) translate(0, -50%)">69 buziaków od Czarka</div>
-            <div class="option" style="transform: rotate(72deg) translate(0, -50%)">Odblokowanie piosenki na playliście</div>
-            <div class="option" style="transform: rotate(144deg) translate(0, -50%)">Wysłanie wiadomości do swojego WSPANIAŁEGO chłopaka</div>
-            <div class="option" style="transform: rotate(216deg) translate(0, -50%)">Jedno Ferrerko</div>
-            <div class="option" style="transform: rotate(288deg) translate(0, -50%)">Białe Porsche 911 cabrio</div>
+            <div class="option" style="transform: rotate(36deg) translate(0, -50%)">69 buziaków od Czarka</div>
+            <div class="option" style="transform: rotate(108deg) translate(0, -50%)">Odblokowanie piosenki na playliście</div>
+            <div class="option" style="transform: rotate(180deg) translate(0, -50%)">Wysłanie wiadomości do swojego WSPANIAŁEGO chłopaka</div>
+            <div class="option" style="transform: rotate(252deg) translate(0, -50%)">Jedno Ferrerko</div>
+            <div class="option" style="transform: rotate(324deg) translate(0, -50%)">Białe Porsche 911 cabrio</div>
         </div>
     </div>
     <button class="spin-button" onclick="spinWheel()">Zakręć kołem!</button>
@@ -140,13 +140,12 @@
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
             
             // Define prize sectors based on the colored areas
-            // Each sector is 72 degrees (360/5), centered on the arrow
             const sectors = [
-                { prize: 0, start: -36, end: 36 },     // 69 buziaków (top)
-                { prize: 1, start: 36, end: 108 },     // Piosenka
-                { prize: 2, start: 108, end: 180 },    // Wiadomość
-                { prize: 3, start: 180, end: 252 },    // Ferrerko
-                // Porsche sector: 252 to 324 (excluded)
+                { prize: 0, start: 0, end: 72 },     // 69 buziaków
+                { prize: 1, start: 72, end: 144 },   // Piosenka
+                { prize: 2, start: 144, end: 216 },  // Wiadomość
+                { prize: 3, start: 216, end: 288 },  // Ferrerko
+                // Porsche sector: 288 to 360 (excluded)
             ];
             
             // Select random sector (excluding Porsche)
@@ -156,9 +155,9 @@
             const randomDegree = selectedSector.start + Math.random() * (selectedSector.end - selectedSector.start);
             
             // Calculate final rotation (counterclockwise)
-            const finalPosition = -randomDegree;  // Simplified rotation calculation
+            const finalPosition = 360 - randomDegree;  // Adjusted to match the visual layout
             const fullRotations = 4 * 360;
-            const finalRotation = -(fullRotations) + finalPosition;
+            const finalRotation = -(fullRotations + finalPosition);
             
             // Apply spin
             wheel.style.transform = `rotate(${finalRotation}deg)`;
