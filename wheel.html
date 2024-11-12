@@ -39,26 +39,30 @@
             );
         }
 
-        .wheel::after {
-            content: '▼';
+        .pointer {
             position: absolute;
-            top: -30px;
+            top: -20px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 30px;
+            width: 20px;
+            height: 40px;
+            z-index: 2;
             color: #333;
+            font-size: 30px;
         }
 
         .option {
             position: absolute;
-            width: 50%;
-            text-align: center;
-            transform-origin: 100% 50%;
-            font-size: 12px;
-            padding: 0 30px;
-            box-sizing: border-box;
+            left: 50%;
+            top: 50%;
+            transform-origin: 0 0;
+            width: 140px; /* Half of wheel width */
+            text-align: left;
+            padding-left: 20px;
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            font-size: 14px;
+            line-height: 1.2;
         }
 
         .spin-button {
@@ -96,12 +100,13 @@
 </head>
 <body>
     <div class="wheel-container">
+        <div class="pointer">▼</div>
         <div class="wheel" id="wheel">
-            <div class="option" style="transform: rotate(36deg)">69 buziaków od Czarka</div>
-            <div class="option" style="transform: rotate(108deg)">Odblokowanie piosenki na playliście</div>
-            <div class="option" style="transform: rotate(180deg)">Wysłanie wiadomości do swojego WSPANIAŁEGO chłopaka</div>
-            <div class="option" style="transform: rotate(252deg)">Jedno Ferrerko</div>
-            <div class="option" style="transform: rotate(324deg)">Białe Porsche 911 cabrio</div>
+            <div class="option" style="transform: rotate(36deg) translate(0, -50%)">69 buziaków od Czarka</div>
+            <div class="option" style="transform: rotate(108deg) translate(0, -50%)">Odblokowanie piosenki na playliście</div>
+            <div class="option" style="transform: rotate(180deg) translate(0, -50%)">Wysłanie wiadomości do swojego WSPANIAŁEGO chłopaka</div>
+            <div class="option" style="transform: rotate(252deg) translate(0, -50%)">Jedno Ferrerko</div>
+            <div class="option" style="transform: rotate(324deg) translate(0, -50%)">Białe Porsche 911 cabrio</div>
         </div>
     </div>
     <button class="spin-button" onclick="spinWheel()">Zakręć kołem!</button>
@@ -127,26 +132,40 @@
             canSpin = false;
 
             const wheel = document.getElementById('wheel');
-            // Always make it look like it's about to land on Porsche
-            const baseRotation = 1440 + (5 * 72) - 10; // 4 full rotations + position for Porsche
             
-            // But then actually land on a different prize
-            const selectedPrizeIndex = Math.floor(Math.random() * 4); // Excludes Porsche
-            const additionalRotation = selectedPrizeIndex * 72 + Math.random() * 30;
+            // Calculate rotations and prize
+            const fullRotations = 4 * 360; // 4 full spins
+            const prizeAngle = 72; // 360 / 5 prizes = 72 degrees per prize
             
-            const totalRotation = baseRotation + additionalRotation;
+            // First, let's make it look like it might land on Porsche
+            const porscheIndex = 4;
+            const almostPorscheRotation = -(fullRotations + (porscheIndex * prizeAngle));
             
-            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            // Then calculate the actual prize (excluding Porsche)
+            const selectedPrizeIndex = Math.floor(Math.random() * 4);
+            const randomOffset = Math.random() * 20 - 10;
+            const finalRotation = -(fullRotations + (selectedPrizeIndex * prizeAngle) + randomOffset);
 
+            // First rotation - almost landing on Porsche
+            wheel.style.transform = `rotate(${almostPorscheRotation}deg)`;
+            
+            // Then after a pause, make an obvious "cheat" move
             setTimeout(() => {
-                showResult(selectedPrizeIndex);
-            }, 4000);
+                wheel.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.0)';
+                wheel.style.transform = `rotate(${finalRotation}deg)`;
+                
+                setTimeout(() => {
+                    showResult(selectedPrizeIndex);
+                    // Reset transition for next spin
+                    wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+                }, 500);
+            }, 3500);
         }
 
         function showResult(prizeIndex) {
             const modal = document.getElementById('resultModal');
             const prizeText = document.getElementById('prizeText');
-            prizeText.textContent = `Wygrywasz: ${prizes[prizeIndex]}!`;
+            prizeText.textContent = `Wygrywasz: ${prizes[prizeIndex]}! (Porsche akurat w serwisie 😅)`;
             modal.style.display = 'block';
 
             if (prizeIndex === 2) { // Message option
