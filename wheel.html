@@ -139,13 +139,14 @@
             void wheel.offsetWidth;
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
             
-            // Define prize sectors (in degrees, clockwise from top)
+            // Define prize sectors based on the colored areas
+            // Each sector is 72 degrees (360/5), centered on the arrow
             const sectors = [
-                { prize: 0, start: -36, end: 36 },    // 69 buziaków
-                { prize: 1, start: 36, end: 108 },    // Piosenka
-                { prize: 2, start: 108, end: 180 },   // Wiadomość
-                { prize: 3, start: 180, end: 252 },   // Ferrerko
-                // { prize: 4, start: 252, end: 324 }, // Porsche (excluded)
+                { prize: 0, start: -36, end: 36 },     // 69 buziaków (top)
+                { prize: 1, start: 36, end: 108 },     // Piosenka
+                { prize: 2, start: 108, end: 180 },    // Wiadomość
+                { prize: 3, start: 180, end: 252 },    // Ferrerko
+                // Porsche sector: 252 to 324 (excluded)
             ];
             
             // Select random sector (excluding Porsche)
@@ -154,11 +155,10 @@
             // Calculate random position within the selected sector
             const randomDegree = selectedSector.start + Math.random() * (selectedSector.end - selectedSector.start);
             
-            // Calculate final rotation
-            // We subtract from 360 because we're rotating counterclockwise
-            const finalPosition = 360 - randomDegree;
+            // Calculate final rotation (counterclockwise)
+            const finalPosition = -randomDegree;  // Simplified rotation calculation
             const fullRotations = 4 * 360;
-            const finalRotation = -(fullRotations + finalPosition);
+            const finalRotation = -(fullRotations) + finalPosition;
             
             // Apply spin
             wheel.style.transform = `rotate(${finalRotation}deg)`;
