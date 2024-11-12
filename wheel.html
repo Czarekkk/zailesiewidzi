@@ -133,31 +133,39 @@
 
             const wheel = document.getElementById('wheel');
             
-            // Reset the wheel's position and transition before new spin
+            // Reset wheel position
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
             void wheel.offsetWidth;
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
             
-            // Calculate spin
-            const fullRotations = 4 * 360; // 4 full spins
-            const prizeAngle = 72; // 360 / 5 prizes = 72 degrees per prize
+            // Define prize sectors (in degrees, clockwise from top)
+            const sectors = [
+                { prize: 0, start: -36, end: 36 },    // 69 buziaków
+                { prize: 1, start: 36, end: 108 },    // Piosenka
+                { prize: 2, start: 108, end: 180 },   // Wiadomość
+                { prize: 3, start: 180, end: 252 },   // Ferrerko
+                // { prize: 4, start: 252, end: 324 }, // Porsche (excluded)
+            ];
             
-            // Select a random prize (excluding Porsche)
-            const selectedPrizeIndex = Math.floor(Math.random() * 4); // 0-3 only
+            // Select random sector (excluding Porsche)
+            const selectedSector = sectors[Math.floor(Math.random() * sectors.length)];
+            
+            // Calculate random position within the selected sector
+            const randomDegree = selectedSector.start + Math.random() * (selectedSector.end - selectedSector.start);
             
             // Calculate final rotation
-            const randomOffset = Math.random() * 50 - 25;
-            // Adjust rotation calculation to match physical wheel layout
-            // We add 72 degrees to align with the starting position
-            const finalRotation = -(fullRotations + ((selectedPrizeIndex + 1) * prizeAngle) + randomOffset);
+            // We subtract from 360 because we're rotating counterclockwise
+            const finalPosition = 360 - randomDegree;
+            const fullRotations = 4 * 360;
+            const finalRotation = -(fullRotations + finalPosition);
             
-            // Apply the spin
+            // Apply spin
             wheel.style.transform = `rotate(${finalRotation}deg)`;
 
-            // Show result after spin completes
+            // Show result after spin
             setTimeout(() => {
-                showResult(selectedPrizeIndex);
+                showResult(selectedSector.prize);
             }, 4000);
         }
 
@@ -168,9 +176,9 @@
             modal.style.display = 'block';
 
             if (prizeIndex === 2) { // Message option
-                const messageText = "Mój chłopak jest najcudowniejszy pod słońcem, uwielbiam go i nie mogę się doczekać a znów się zobaczymy 🥰 (wcale nie wygrałam tej wiadomości w kole fortuny i nie musiałam jej wysłać)";
+                const messageText = "Hej kochanie! Wygrałam możliwość napisania do Ciebie wiadomości! 🥰";
                 const encodedMessage = encodeURIComponent(messageText);
-                window.location.href = `sms:+48603815422&body=${encodedMessage}`;
+                window.location.href = `sms:+48729995462&body=${encodedMessage}`;
             }
         }
 
