@@ -133,16 +133,23 @@
 
             const wheel = document.getElementById('wheel');
             
+            // Reset the wheel's position and transition before new spin
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            // Force reflow to ensure the reset takes effect
+            void wheel.offsetWidth;
+            wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            
             // Calculate spin
             const fullRotations = 4 * 360; // 4 full spins
             const prizeAngle = 72; // 360 / 5 prizes = 72 degrees per prize
             
             // Select a random prize (excluding Porsche)
             const selectedPrizeIndex = Math.floor(Math.random() * 4); // 0-3 only
-            const randomOffset = Math.random() * 20 - 10; // Small random offset for realism
             
-            // Calculate final rotation (negative because we're spinning counterclockwise)
-            const finalRotation = -(fullRotations + (selectedPrizeIndex * prizeAngle) + randomOffset);
+            // Calculate final rotation with centered range
+            const randomOffset = Math.random() * 50 - 25; // Random offset within prize's range
+            const finalRotation = -(fullRotations + (selectedPrizeIndex * prizeAngle) + 36 + randomOffset);
             
             // Apply the spin
             wheel.style.transform = `rotate(${finalRotation}deg)`;
