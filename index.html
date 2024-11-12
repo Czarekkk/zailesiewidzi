@@ -108,13 +108,6 @@
                 surpriseBox.style.display = "none";
             }, 600);
         }
-
-        document.addEventListener('touchstart', function() {
-            const audio = document.getElementById('backgroundMusic');
-            audio.play().catch(function(error) {
-                console.log("Audio playback failed:", error);
-            });
-        }, { once: true });
     </script>
 </body>
 </html>
