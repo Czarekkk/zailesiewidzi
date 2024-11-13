@@ -66,10 +66,29 @@
             display: none;  /* Hide the password input initially */
         }
         
+        
+
+
         canvas {
             border: 2px solid #333;
             touch-action: none;
             margin-top: 20px;
+        }
+        
+        #debugSkip {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 5px;
+            font-size: 10px;
+            opacity: 0.2;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        
+        #debugSkip:hover {
+            opacity: 0.5;
         }
     </style>
 </head>
@@ -93,6 +112,8 @@
     <audio id="backgroundMusic" loop>
         <source src="like_i_love_you.mp3" type="audio/mpeg">
     </audio>
+
+    <button id="debugSkip" onclick="skipPuzzle()">⏭️</button>
 
     <script>
         const canvas = document.getElementById('puzzleCanvas');
@@ -275,6 +296,12 @@
             setTimeout(() => {
                 surpriseBox.style.display = "none";
             }, 600);
+        }
+
+        function skipPuzzle() {
+            document.getElementById("jigsawSection").style.display = "none";
+            document.getElementById("countdownSection").style.display = "block";
+            updateCountdown();
         }
     </script>
 </body>
