@@ -244,10 +244,19 @@
 
         function updateCountdown() {
             const today = new Date();
-            const targetDate = new Date('2024-11-21');
+            const targetDate = new Date('2024-11-21T17:28:00+01:00'); // Warsaw time (UTC+1)
             const diffTime = targetDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            document.getElementById("countdownText").innerText = `Widzimy się już za ${diffDays} dni!`;
+            
+            const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+            
+            document.getElementById("countdownText").innerText = 
+                `Widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund!`;
+            
+            // Update every second
+            setTimeout(updateCountdown, 1000);
         }
 
         function showSurprise() {
