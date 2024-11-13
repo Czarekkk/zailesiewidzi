@@ -58,13 +58,25 @@
             opacity: 0;
             transition: opacity 0.5s ease;
         }
+        #jigsawSection {
+            text-align: center;
+        }
+        
+        #passwordSection {
+            display: none;  /* Hide the password input initially */
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            touch-action: none;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <div id="passwordSection">
+    <div id="jigsawSection">
         <h2>Chcesz się bić?</h2>
-        <input type="password" id="password" placeholder="Wpisz hasło">
-        <button onclick="unlockSite()">Otwórz</button>
+        <canvas id="puzzleCanvas" width="600" height="600"></canvas>
     </div>
 
     <div id="countdownSection">
@@ -90,15 +102,19 @@
             });
         }
 
-        function unlockSite() {
-            const password = document.getElementById("password").value;
-            if (password === "zawsze") {
-                document.getElementById("passwordSection").style.display = "none";
-                document.getElementById("countdownSection").style.display = "block";
-                updateCountdown();
-            } else {
-                alert("Niepoprawne hasło, spróbuj ponownie");
+        function isPuzzleComplete() {
+            const complete = pieces.every(piece => 
+                piece.x === piece.correctX && piece.y === piece.correctY
+            );
+            
+            if (complete) {
+                setTimeout(() => {
+                    document.getElementById("jigsawSection").style.display = "none";
+                    document.getElementById("countdownSection").style.display = "block";
+                    updateCountdown();
+                }, 500);
             }
+            return complete;
         }
 
         function updateCountdown() {
