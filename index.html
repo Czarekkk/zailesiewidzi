@@ -95,11 +95,129 @@
     </audio>
 
     <script>
-        function playAudio() {
-            const audio = document.getElementById('backgroundMusic');
-            audio.play().catch(error => {
-                console.log("Audio playback failed:", error);
+        const canvas = document.getElementById('puzzleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const PUZZLE_DIFFICULTY = 4;
+        const PIECE_SIZE = canvas.width / PUZZLE_DIFFICULTY;
+
+        let pieces = [];
+        let image = new Image();
+        image.src = 'jigsaw-g8.jpg';
+
+        let selectedPiece = null;
+        let offsetX, offsetY;
+
+        image.addEventListener('load', initPuzzle);
+
+        function initPuzzle() {
+            createPieces();
+            shufflePieces();
+            drawPuzzle();
+            canvas.addEventListener('mousedown', onPuzzleClick);
+            canvas.addEventListener('touchstart', onPuzzleClick, { passive: false });
+        }
+
+        function createPieces() {
+            pieces = [];
+            for (let y = 0; y < PUZZLE_DIFFICULTY; y++) {
+                for (let x = 0; x < PUZZLE_DIFFICULTY; x++) {
+                    pieces.push({
+                        sx: x * PIECE_SIZE,
+                        sy: y * PIECE_SIZE,
+                        x: Math.random() * (canvas.width - PIECE_SIZE),
+                        y: Math.random() * (canvas.height - PIECE_SIZE),
+                        correctX: x * PIECE_SIZE,
+                        correctY: y * PIECE_SIZE,
+                    });
+                }
+            }
+        }
+
+        function shufflePieces() {
+            pieces = pieces.sort(() => Math.random() - 0.5);
+        }
+
+        function drawPuzzle() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(piece => {
+                ctx.drawImage(
+                    image,
+                    piece.sx, piece.sy, PIECE_SIZE, PIECE_SIZE,
+                    piece.x, piece.y, PIECE_SIZE, PIECE_SIZE
+                );
+                ctx.strokeRect(piece.x, piece.y, PIECE_SIZE, PIECE_SIZE);
             });
+        }
+
+        function onPuzzleClick(e) {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            selectedPiece = getClickedPiece(pos.x, pos.y);
+            if (selectedPiece) {
+                offsetX = pos.x - selectedPiece.x;
+                offsetY = pos.y - selectedPiece.y;
+                canvas.addEventListener('mousemove', onPuzzleMove);
+                canvas.addEventListener('mouseup', onPuzzleRelease);
+                canvas.addEventListener('touchmove', onPuzzleMove, { passive: false });
+                canvas.addEventListener('touchend', onPuzzleRelease);
+            }
+        }
+
+        function onPuzzleMove(e) {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            selectedPiece.x = pos.x - offsetX;
+            selectedPiece.y = pos.y - offsetY;
+            drawPuzzle();
+        }
+
+        function onPuzzleRelease(e) {
+            canvas.removeEventListener('mousemove', onPuzzleMove);
+            canvas.removeEventListener('mouseup', onPuzzleRelease);
+            canvas.removeEventListener('touchmove', onPuzzleMove);
+            canvas.removeEventListener('touchend', onPuzzleRelease);
+            snapPiece();
+            drawPuzzle();
+            if (isPuzzleComplete()) {
+                setTimeout(() => {
+                    document.getElementById("jigsawSection").style.display = "none";
+                    document.getElementById("countdownSection").style.display = "block";
+                    updateCountdown();
+                }, 500);
+            }
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const event = e.touches ? e.touches[0] : e;
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        function getClickedPiece(x, y) {
+            for (let i = pieces.length - 1; i >= 0; i--) {
+                const piece = pieces[i];
+                if (
+                    x > piece.x && x < piece.x + PIECE_SIZE &&
+                    y > piece.y && y < piece.y + PIECE_SIZE
+                ) {
+                    return piece;
+                }
+            }
+            return null;
+        }
+
+        function snapPiece() {
+            if (
+                Math.abs(selectedPiece.x - selectedPiece.correctX) < PIECE_SIZE / 2 &&
+                Math.abs(selectedPiece.y - selectedPiece.correctY) < PIECE_SIZE / 2
+            ) {
+                selectedPiece.x = selectedPiece.correctX;
+                selectedPiece.y = selectedPiece.correctY;
+            }
         }
 
         function isPuzzleComplete() {
@@ -115,6 +233,13 @@
                 }, 500);
             }
             return complete;
+        }
+
+        function playAudio() {
+            const audio = document.getElementById('backgroundMusic');
+            audio.play().catch(error => {
+                console.log("Audio playback failed:", error);
+            });
         }
 
         function updateCountdown() {
