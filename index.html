@@ -228,9 +228,12 @@
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
             const event = e.touches ? e.touches[0] : e;
+            const scaleX = canvas.width / rect.width;    // Calculate scaling factor
+            const scaleY = canvas.height / rect.height;  // Calculate scaling factor
+            
             return {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
+                x: (event.clientX - rect.left) * scaleX,
+                y: (event.clientY - rect.top) * scaleY
             };
         }
 
