@@ -110,6 +110,18 @@
         <div id="surpriseContent">
             <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWw1Z2pnb21pYXBkOHhmdHJqajR0eGhuODFwcm5hdXdlejV6NGR2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6MWahPArixa6I/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
             <p>Już o jeden dzień mniej do naszego spotkania 🥺</p>
+            <button onclick="openSpotifySong()" style="
+                background-color: #1DB954;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 20px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 10px;
+                transition: background-color 0.3s ease;">
+                Odbierz piosenkę w prezencie 🎵
+            </button>
         </div>
     </div>
 
@@ -316,6 +328,14 @@
             setTimeout(() => {
                 window.open('spotify:track:7caj6X6NMX3tlhWnu1du6V', '_blank');
             }, 4000);
+        }
+
+        function openSpotifySong() {
+            window.open('spotify:track:7caj6X6NMX3tlhWnu1du6V', '_blank');
+            // Fallback for mobile devices
+            setTimeout(() => {
+                window.open('https://open.spotify.com/track/7caj6X6NMX3tlhWnu1du6V', '_blank');
+            }, 1000);
         }
     </script>
 </body>
