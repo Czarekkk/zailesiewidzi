@@ -308,9 +308,26 @@
         }
 
         function skipPuzzle() {
-            document.getElementById("questionnaireSection").style.display = "none";
-            document.getElementById("countdownSection").style.display = "block";
-            updateCountdown();
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            const message = `Nie mogę doczekać się tak bardzo, że aż OSZUKAŁAM twoją grę! Ale widzimy się za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund! <3`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `sms:+48603815422&body=${encodedMessage}`;
+            
+            // Show countdown section after small delay
+            setTimeout(() => {
+                document.getElementById("questionnaireSection").style.display = "none";
+                document.getElementById("countdownSection").style.display = "block";
+                updateCountdown();
+            }, 1000);
         }
 
         function openSpotifySong() {
