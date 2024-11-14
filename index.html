@@ -58,25 +58,53 @@
             opacity: 0;
             transition: opacity 0.5s ease;
         }
-        #jigsawSection {
+        #questionnaireSection {
             text-align: center;
-            width: 95vw;
             max-width: 600px;
             margin: 0 auto;
+            padding: 20px;
         }
         
-        #jigsawSection h2 {
-            font-size: clamp(1rem, 4vw, 1.5rem);
-            margin: 10px 0;
-        }
-        
-        canvas {
-            width: 100%;
-            height: auto;
+        .question {
+            text-align: center;
             max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .text-input, .date-input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
             border: 2px solid #333;
-            touch-action: none;
-            margin-top: 10px;
+            border-radius: 5px;
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        input[type="range"] {
+            width: 80%;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #rangeValue {
+            font-size: 24px;
+            margin: 10px 0;
         }
         
         #debugSkip {
@@ -97,9 +125,55 @@
     </style>
 </head>
 <body>
-    <div id="jigsawSection">
-        <h2>Rozwiąż zagadkę i dowiedz się, kiedy się widzimy! 💕</h2>
-        <canvas id="puzzleCanvas" width="600" height="600"></canvas>
+    <div id="questionnaireSection">
+        <div class="question" id="q1">
+            <h2>Jak nazywa się twój chłopak?</h2>
+            <input type="text" id="answer1" class="text-input">
+            <button onclick="nextQuestion(1)">Dalej</button>
+        </div>
+
+        <div class="question" id="q2" style="display: none;">
+            <h2>Od kiedy jesteście razem?</h2>
+            <div class="radio-group">
+                <label><input type="radio" name="date" value="14 września"> 14 września</label>
+                <label><input type="radio" name="date" value="12 września"> 12 września</label>
+                <label><input type="radio" name="date" value="11 września"> 11 września</label>
+            </div>
+            <button onclick="nextQuestion(2)">Dalej</button>
+        </div>
+
+        <div class="question" id="q3" style="display: none;">
+            <h2>Podaj datę jego urodzin:</h2>
+            <input type="date" id="answer3" class="date-input">
+            <button onclick="nextQuestion(3)">Dalej</button>
+        </div>
+
+        <div class="question" id="q4" style="display: none;">
+            <h2>Jakie jest twoje ulubione danie, które dotychczas razem zrobiliśmy?</h2>
+            <input type="text" id="answer4" class="text-input">
+            <button onclick="nextQuestion(4)">Dalej</button>
+        </div>
+
+        <div class="question" id="q5" style="display: none;">
+            <h2>W skali od 1 do 69 jak bardzo tęsknisz za swoim chłopakiem?</h2>
+            <input type="range" id="answer5" min="1" max="69" step="1" list="tickmarks">
+            <datalist id="tickmarks">
+                <option value="1">1</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="69">69</option>
+            </datalist>
+            <div id="rangeValue">35</div>
+            <button onclick="nextQuestion(5)">Dalej</button>
+        </div>
+
+        <div class="question" id="confirmation" style="display: none;">
+            <h2>Czy jesteś pewna swoich odpowiedzi?</h2>
+            <button onclick="submitAnswers()">Tak, wyślij je do mojego chłopaka!</button>
+        </div>
     </div>
 
     <div id="countdownSection">
@@ -108,7 +182,7 @@
             <p>Dzisiejsza niespodzianka</p>
         </div>
         <div id="surpriseContent">
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWw1Z2pnb21pYXBkOHhmdHJqajR0eGhuODFwcm5hdXdlejV6NGR2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6MWahPArixa6I/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmk2OHFlMzFrdWl5dmt5dHNlb3Z4dnlreXh1NWdydjZlcnNwa3kzeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/zYp4kNcrSjGwteQRiX/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
             <p>Już o jeden dzień mniej do naszego spotkania 🥺</p>
             <button onclick="openSpotifySong()" style="
                 background-color: #1DB954;
@@ -132,152 +206,63 @@
     <button id="debugSkip" onclick="skipPuzzle()">⏭️</button>
 
     <script>
-        const canvas = document.getElementById('puzzleCanvas');
-        const ctx = canvas.getContext('2d');
+        let answers = {};
 
-        const PUZZLE_DIFFICULTY = 4;
-        const PIECE_SIZE = canvas.width / PUZZLE_DIFFICULTY;
+        function nextQuestion(currentQ) {
+            // Store answer
+            switch(currentQ) {
+                case 1:
+                    answers.name = document.getElementById('answer1').value;
+                    break;
+                case 2:
+                    answers.date = document.querySelector('input[name="date"]:checked').value;
+                    break;
+                case 3:
+                    answers.birthday = document.getElementById('answer3').value;
+                    break;
+                case 4:
+                    answers.meal = document.getElementById('answer4').value;
+                    break;
+                case 5:
+                    answers.missing = document.getElementById('answer5').value;
+                    break;
+            }
 
-        let pieces = [];
-        let image = new Image();
-        image.src = 'jigsaw-g8.jpg';
-
-        let selectedPiece = null;
-        let offsetX, offsetY;
-
-        image.addEventListener('load', initPuzzle);
-
-        function initPuzzle() {
-            createPieces();
-            shufflePieces();
-            drawPuzzle();
-            canvas.addEventListener('mousedown', onPuzzleClick);
-            canvas.addEventListener('touchstart', onPuzzleClick, { passive: false });
-        }
-
-        function createPieces() {
-            pieces = [];
-            for (let y = 0; y < PUZZLE_DIFFICULTY; y++) {
-                for (let x = 0; x < PUZZLE_DIFFICULTY; x++) {
-                    pieces.push({
-                        sx: x * PIECE_SIZE,
-                        sy: y * PIECE_SIZE,
-                        x: Math.random() * (canvas.width - PIECE_SIZE),
-                        y: Math.random() * (canvas.height - PIECE_SIZE),
-                        correctX: x * PIECE_SIZE,
-                        correctY: y * PIECE_SIZE,
-                    });
-                }
+            // Hide current, show next
+            document.getElementById(`q${currentQ}`).style.display = 'none';
+            if (currentQ < 5) {
+                document.getElementById(`q${currentQ + 1}`).style.display = 'block';
+            } else {
+                document.getElementById('confirmation').style.display = 'block';
             }
         }
 
-        function shufflePieces() {
-            pieces = pieces.sort(() => Math.random() - 0.5);
-        }
+        // Add range value display
+        document.getElementById('answer5').addEventListener('input', function() {
+            document.getElementById('rangeValue').textContent = this.value;
+        });
 
-        function drawPuzzle() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            pieces.forEach(piece => {
-                ctx.drawImage(
-                    image,
-                    piece.sx, piece.sy, PIECE_SIZE, PIECE_SIZE,
-                    piece.x, piece.y, PIECE_SIZE, PIECE_SIZE
-                );
-                ctx.strokeRect(piece.x, piece.y, PIECE_SIZE, PIECE_SIZE);
-            });
-        }
-
-        function onPuzzleClick(e) {
-            e.preventDefault();
-            const pos = getMousePos(e);
-            selectedPiece = getClickedPiece(pos.x, pos.y);
-            if (selectedPiece) {
-                offsetX = pos.x - selectedPiece.x;
-                offsetY = pos.y - selectedPiece.y;
-                canvas.addEventListener('mousemove', onPuzzleMove);
-                canvas.addEventListener('mouseup', onPuzzleRelease);
-                canvas.addEventListener('touchmove', onPuzzleMove, { passive: false });
-                canvas.addEventListener('touchend', onPuzzleRelease);
-            }
-        }
-
-        function onPuzzleMove(e) {
-            e.preventDefault();
-            const pos = getMousePos(e);
-            selectedPiece.x = pos.x - offsetX;
-            selectedPiece.y = pos.y - offsetY;
-            drawPuzzle();
-        }
-
-        function onPuzzleRelease(e) {
-            canvas.removeEventListener('mousemove', onPuzzleMove);
-            canvas.removeEventListener('mouseup', onPuzzleRelease);
-            canvas.removeEventListener('touchmove', onPuzzleMove);
-            canvas.removeEventListener('touchend', onPuzzleRelease);
-            snapPiece();
-            drawPuzzle();
-            if (isPuzzleComplete()) {
-                setTimeout(() => {
-                    document.getElementById("jigsawSection").style.display = "none";
-                    document.getElementById("countdownSection").style.display = "block";
-                    updateCountdown();
-                }, 500);
-            }
-        }
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const event = e.touches ? e.touches[0] : e;
-            const scaleX = canvas.width / rect.width;    // Calculate scaling factor
-            const scaleY = canvas.height / rect.height;  // Calculate scaling factor
+        function submitAnswers() {
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
             
-            return {
-                x: (event.clientX - rect.left) * scaleX,
-                y: (event.clientY - rect.top) * scaleY
-            };
-        }
-
-        function getClickedPiece(x, y) {
-            for (let i = pieces.length - 1; i >= 0; i--) {
-                const piece = pieces[i];
-                if (
-                    x > piece.x && x < piece.x + PIECE_SIZE &&
-                    y > piece.y && y < piece.y + PIECE_SIZE
-                ) {
-                    return piece;
-                }
-            }
-            return null;
-        }
-
-        function snapPiece() {
-            if (
-                Math.abs(selectedPiece.x - selectedPiece.correctX) < PIECE_SIZE / 2 &&
-                Math.abs(selectedPiece.y - selectedPiece.correctY) < PIECE_SIZE / 2
-            ) {
-                selectedPiece.x = selectedPiece.correctX;
-                selectedPiece.y = selectedPiece.correctY;
-            }
-        }
-
-        function isPuzzleComplete() {
-            const complete = pieces.every(piece => 
-                piece.x === piece.correctX && piece.y === piece.correctY
-            );
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
             
-            if (complete) {
-                setTimeout(() => {
-                    document.getElementById("jigsawSection").style.display = "none";
-                    document.getElementById("countdownSection").style.display = "block";
-                    updateCountdown();
-                    
-                    // Add 4-second delay before opening Spotify
-                    setTimeout(() => {
-                        window.open('spotify:track:7caj6X6NMX3tlhWnu1du6V', '_blank');
-                    }, 4000);
-                }, 500);
-            }
-            return complete;
+            const message = `Mój drogi ${answers.name}! Jesteśmy razem zaledwie od ${answers.date}, ale czuję, że znamy się od ${answers.birthday}. Nie mogę doczekać się aż znowu ugotujemy ${answers.meal}. W skali od 1 do 69 tęsknię na ${answers.missing}, ale na szczęscie widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund! <3`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `sms:+48603815422&body=${encodedMessage}`;
+            
+            // Show countdown section after small delay
+            setTimeout(() => {
+                document.getElementById('questionnaireSection').style.display = 'none';
+                document.getElementById('countdownSection').style.display = 'block';
+                updateCountdown();
+            }, 1000);
         }
 
         function playAudio() {
@@ -323,21 +308,16 @@
         }
 
         function skipPuzzle() {
-            document.getElementById("jigsawSection").style.display = "none";
+            document.getElementById("questionnaireSection").style.display = "none";
             document.getElementById("countdownSection").style.display = "block";
             updateCountdown();
-            
-            // Add 4-second delay before opening Spotify
-            setTimeout(() => {
-                window.open('spotify:track:7caj6X6NMX3tlhWnu1du6V', '_blank');
-            }, 4000);
         }
 
         function openSpotifySong() {
-            window.open('spotify:track:7caj6X6NMX3tlhWnu1du6V', '_blank');
+            window.open('spotify:track:44AyOl4qVkzS48vBsbNXaC', '_blank');
             // Fallback for mobile devices
             setTimeout(() => {
-                window.open('https://open.spotify.com/track/7caj6X6NMX3tlhWnu1du6V', '_blank');
+                window.open('https://open.spotify.com/track/44AyOl4qVkzS48vBsbNXaC', '_blank');
             }, 1000);
         }
     </script>
