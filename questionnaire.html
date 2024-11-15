@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz o Czarku</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #fdf6e3;
+            margin: 0;
+        }
+
+        #questionnaireSection {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .question {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .text-input, .date-input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #333;
+            border-radius: 5px;
+        }
+        
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        input[type="range"] {
+            width: 80%;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #rangeValue {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="questionnaireSection">
+        <div class="question" id="q1">
+            <h2>Jak nazywa się twój chłopak?</h2>
+            <input type="text" id="answer1" class="text-input">
+            <button onclick="nextQuestion(1)">Dalej</button>
+        </div>
+
+        <div class="question" id="q2" style="display: none;">
+            <h2>Od kiedy jesteście razem?</h2>
+            <div class="radio-group">
+                <label><input type="radio" name="date" value="14 września"> 14 września</label>
+                <label><input type="radio" name="date" value="12 września"> 12 września</label>
+                <label><input type="radio" name="date" value="11 września"> 11 września</label>
+            </div>
+            <button onclick="nextQuestion(2)">Dalej</button>
+        </div>
+
+        <div class="question" id="q3" style="display: none;">
+            <h2>Podaj datę jego urodzin:</h2>
+            <input type="date" id="answer3" class="date-input">
+            <button onclick="nextQuestion(3)">Dalej</button>
+        </div>
+
+        <div class="question" id="q4" style="display: none;">
+            <h2>Jakie jest twoje ulubione danie, które dotychczas razem zrobiliśmy?</h2>
+            <input type="text" id="answer4" class="text-input">
+            <button onclick="nextQuestion(4)">Dalej</button>
+        </div>
+
+        <div class="question" id="q5" style="display: none;">
+            <h2>W skali od 1 do 69 jak bardzo tęsknisz za swoim chłopakiem?</h2>
+            <input type="range" id="answer5" min="1" max="69" step="1" list="tickmarks">
+            <datalist id="tickmarks">
+                <option value="1">1</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="69">69</option>
+            </datalist>
+            <div id="rangeValue">35</div>
+            <button onclick="nextQuestion(5)">Dalej</button>
+        </div>
+
+        <div class="question" id="confirmation" style="display: none;">
+            <h2>Czy jesteś pewna swoich odpowiedzi?</h2>
+            <button onclick="submitAnswers()">Tak, wyślij je do mojego chłopaka!</button>
+        </div>
+    </div>
+
+    <script>
+        let answers = {};
+
+        function nextQuestion(currentQ) {
+            // Store answer
+            switch(currentQ) {
+                case 1:
+                    answers.name = document.getElementById('answer1').value;
+                    break;
+                case 2:
+                    answers.date = document.querySelector('input[name="date"]:checked').value;
+                    break;
+                case 3:
+                    answers.birthday = document.getElementById('answer3').value;
+                    break;
+                case 4:
+                    answers.meal = document.getElementById('answer4').value;
+                    break;
+                case 5:
+                    answers.missing = document.getElementById('answer5').value;
+                    break;
+            }
+
+            // Hide current, show next
+            document.getElementById(`q${currentQ}`).style.display = 'none';
+            if (currentQ < 5) {
+                document.getElementById(`q${currentQ + 1}`).style.display = 'block';
+            } else {
+                document.getElementById('confirmation').style.display = 'block';
+            }
+        }
+
+        // Add range value display
+        document.getElementById('answer5').addEventListener('input', function() {
+            document.getElementById('rangeValue').textContent = this.value;
+        });
+
+        function submitAnswers() {
+            const message = `Odpowiedzi na quiz:\n\nImię chłopaka: ${answers.name}\nData związku: ${answers.date}\nUrodziny: ${answers.birthday}\nUlubione danie: ${answers.meal}\nPoziom tęsknoty: ${answers.missing}/69 💕`;
+            const encodedMessage = encodeURIComponent(message);
+            window.location.href = `sms:+48603815422&body=${encodedMessage}`;
+        }
+    </script>
+</body>
+</html>

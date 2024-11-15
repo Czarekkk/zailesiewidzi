@@ -33,12 +33,64 @@
             background-color: #fdf6e3;
             margin: 0;
         }
-        #passwordSection, #countdownSection {
-            text-align: center;
+
+        /* Memory game styles */
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
         }
+
+        .card {
+            aspect-ratio: 1;
+            background: #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .card-front {
+            background: #2196F3;
+        }
+
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+        }
+
+        .card img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        /* Countdown section styles */
         #countdownSection {
+            text-align: center;
             display: none;
         }
+
         #surpriseBox {
             width: 200px;
             height: 200px;
@@ -53,149 +105,128 @@
             transform-style: preserve-3d;
             position: relative;
         }
-        #surpriseContent {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        #questionnaireSection {
+
+        /* Previous games section */
+        .previous-games {
+            margin-top: 30px;
             text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
         }
-        
-        .question {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
+
+        .previous-games h3 {
+            color: #333;
+            margin-bottom: 15px;
         }
-        
-        .text-input, .date-input {
-            width: 80%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 2px solid #333;
+
+        .previous-games a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: #ffcc00;
+            color: black;
+            text-decoration: none;
             border-radius: 5px;
+            transition: background 0.3s;
         }
-        
-        .radio-group {
+
+        .previous-games a:hover {
+            background: #ffd633;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            margin: 20px 0;
+            transition: transform 0.3s;
+            z-index: 1000;
         }
-        
-        input[type="range"] {
-            width: 80%;
-            margin: 20px 0;
+
+        .popup.show {
+            transform: translate(-50%, -50%) scale(1);
         }
-        
-        button {
+
+        .popup img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .popup p {
+            margin: 10px 0;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        #memoryGameSection {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #surpriseContent {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .skip-button {
+            display: block;
+            margin: 20px auto;
             padding: 10px 20px;
-            background-color: #ffcc00;
+            background: #ffcc00;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
         }
-        
-        #rangeValue {
-            font-size: 24px;
-            margin: 10px 0;
-        }
-        
-        #debugSkip {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 5px;
-            font-size: 10px;
-            opacity: 0.2;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        
-        #debugSkip:hover {
-            opacity: 0.5;
+
+        .skip-button:hover {
+            background: #ffd633;
         }
     </style>
 </head>
 <body>
-    <div id="questionnaireSection">
-        <div class="question" id="q1">
-            <h2>Jak nazywa się twój chłopak?</h2>
-            <input type="text" id="answer1" class="text-input">
-            <button onclick="nextQuestion(1)">Dalej</button>
+    <div id="memoryGameSection">
+        <div class="game-container" id="gameContainer"></div>
+        
+        <div class="popup" id="wrongPopup">
+            <img src="images/sad-face.png" alt="Ups!">
+            <p>Ups, spróbuj jeszcze raz!</p>
         </div>
-
-        <div class="question" id="q2" style="display: none;">
-            <h2>Od kiedy jesteście razem?</h2>
-            <div class="radio-group">
-                <label><input type="radio" name="date" value="14 września"> 14 września</label>
-                <label><input type="radio" name="date" value="12 września"> 12 września</label>
-                <label><input type="radio" name="date" value="11 września"> 11 września</label>
-            </div>
-            <button onclick="nextQuestion(2)">Dalej</button>
+        
+        <div class="popup" id="correctPopup">
+            <img src="images/happy-face.png" alt="Brawo!">
+            <p>Brawo, dostajesz buziaka!</p>
         </div>
-
-        <div class="question" id="q3" style="display: none;">
-            <h2>Podaj datę jego urodzin:</h2>
-            <input type="date" id="answer3" class="date-input">
-            <button onclick="nextQuestion(3)">Dalej</button>
-        </div>
-
-        <div class="question" id="q4" style="display: none;">
-            <h2>Jakie jest twoje ulubione danie, które dotychczas razem zrobiliśmy?</h2>
-            <input type="text" id="answer4" class="text-input">
-            <button onclick="nextQuestion(4)">Dalej</button>
-        </div>
-
-        <div class="question" id="q5" style="display: none;">
-            <h2>W skali od 1 do 69 jak bardzo tęsknisz za swoim chłopakiem?</h2>
-            <input type="range" id="answer5" min="1" max="69" step="1" list="tickmarks">
-            <datalist id="tickmarks">
-                <option value="1">1</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-                <option value="69">69</option>
-            </datalist>
-            <div id="rangeValue">35</div>
-            <button onclick="nextQuestion(5)">Dalej</button>
-        </div>
-
-        <div class="question" id="confirmation" style="display: none;">
-            <h2>Czy jesteś pewna swoich odpowiedzi?</h2>
-            <button onclick="submitAnswers()">Tak, wyślij je do mojego chłopaka!</button>
-        </div>
+        <button onclick="checkPassword()" class="skip-button">Pomiń grę</button>
     </div>
 
-    <div id="countdownSection">
+    <div id="countdownSection" style="display: none;">
         <h2 id="countdownText">Widzimy się już za X dni!</h2>
         <div id="surpriseBox" onclick="showSurprise()">
             <p>Dzisiejsza niespodzianka</p>
         </div>
-        <div id="surpriseContent">
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmk2OHFlMzFrdWl5dmt5dHNlb3Z4dnlreXh1NWdydjZlcnNwa3kzeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/zYp4kNcrSjGwteQRiX/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
+        <div id="surpriseContent" style="display: none;">
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXh0Y3ZhNTI5ZXRkNXhxYm02eXBkYmM4NTc5Z24wOWFhN3Vrd3h2diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/c76IJLufpNwSULPk77/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
             <p>Już o jeden dzień mniej do naszego spotkania 🥺</p>
-            <button onclick="openSpotifySong()" style="
-                background-color: #1DB954;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 20px;
-                font-size: 16px;
-                cursor: pointer;
-                margin-top: 10px;
-                transition: background-color 0.3s ease;">
+            <button onclick="openSpotifySong()" style="background-color: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background-color 0.3s ease;">
                 Odbierz piosenkę w prezencie 🎵
             </button>
+        </div>
+        <div class="previous-games">
+            <h3>Zagraj w gry z poprzednich dni:</h3>
+            <a href="questionnaire.html">Quiz o Czarku</a>
+            <a href="whackatesla.html">Whack-a-Tesla</a>
+            <a href="wheel.html">Koło Fortuny</a>
         </div>
     </div>
 
@@ -203,46 +234,130 @@
         <source src="like_i_love_you.mp3" type="audio/mpeg">
     </audio>
 
-    <button id="debugSkip" onclick="skipPuzzle()">⏭️</button>
-
     <script>
-        let answers = {};
+        // Memory game code
+        const images = [
+            'images/card1.png',
+            'images/card2.png',
+            'images/card3.png',
+            'images/card4.png',
+            'images/card5.png',
+            'images/card6.png',
+            'images/card7.png',
+            'images/card8.png'
+        ];
 
-        function nextQuestion(currentQ) {
-            // Store answer
-            switch(currentQ) {
-                case 1:
-                    answers.name = document.getElementById('answer1').value;
-                    break;
-                case 2:
-                    answers.date = document.querySelector('input[name="date"]:checked').value;
-                    break;
-                case 3:
-                    answers.birthday = document.getElementById('answer3').value;
-                    break;
-                case 4:
-                    answers.meal = document.getElementById('answer4').value;
-                    break;
-                case 5:
-                    answers.missing = document.getElementById('answer5').value;
-                    break;
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        const wrongMessages = [
+            "Ups, spróbuj jeszcze raz!",
+            "Znowu źle, chcesz się bić?",
+            "Nieeee no idziesz do domu...",
+            "Za marzenia nie karają"
+        ];
+
+        const correctMessages = [
+            "Brawo, dostajesz buziaka!",
+            "Idziesz do domu... ale mojego!",
+            "Mmmm... Ale zdolna niunia!"
+        ];
+
+        function createCard(imageUrl) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const front = document.createElement('div');
+            front.className = 'card-front';
+            
+            const back = document.createElement('div');
+            back.className = 'card-back';
+            
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            back.appendChild(img);
+            
+            card.appendChild(front);
+            card.appendChild(back);
+            
+            return card;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
+            return array;
+        }
 
-            // Hide current, show next
-            document.getElementById(`q${currentQ}`).style.display = 'none';
-            if (currentQ < 5) {
-                document.getElementById(`q${currentQ + 1}`).style.display = 'block';
-            } else {
-                document.getElementById('confirmation').style.display = 'block';
+        function initializeGame() {
+            const gameContainer = document.getElementById('gameContainer');
+            const cardPairs = [...images, ...images];
+            shuffleArray(cardPairs);
+
+            cardPairs.forEach(imageUrl => {
+                const card = createCard(imageUrl);
+                card.addEventListener('click', () => flipCard(card, imageUrl));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function flipCard(card, imageUrl) {
+            if (flippedCards.length === 2 || card.classList.contains('flipped')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push({ card, imageUrl });
+
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
             }
         }
 
-        // Add range value display
-        document.getElementById('answer5').addEventListener('input', function() {
-            document.getElementById('rangeValue').textContent = this.value;
-        });
+        function showPopup(popupId) {
+            const popup = document.getElementById(popupId);
+            
+            if (popupId === 'wrongPopup') {
+                const randomIndex = Math.floor(Math.random() * wrongMessages.length);
+                popup.querySelector('p').textContent = wrongMessages[randomIndex];
+            } else if (popupId === 'correctPopup') {
+                const randomIndex = Math.floor(Math.random() * correctMessages.length);
+                popup.querySelector('p').textContent = correctMessages[randomIndex];
+            }
+            
+            popup.classList.add('show');
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 1500);
+        }
 
-        function submitAnswers() {
+        function checkMatch() {
+            const [first, second] = flippedCards;
+            if (first.imageUrl === second.imageUrl) {
+                matchedPairs++;
+                showPopup('correctPopup');
+                if (matchedPairs === images.length) {
+                    setTimeout(() => {
+                        document.getElementById('memoryGameSection').style.display = 'none';
+                        document.getElementById('countdownSection').style.display = 'block';
+                        updateCountdown();
+                    }, 1500);
+                }
+            } else {
+                showPopup('wrongPopup');
+                setTimeout(() => {
+                    first.card.classList.remove('flipped');
+                    second.card.classList.remove('flipped');
+                }, 1500);
+            }
+            flippedCards = [];
+        }
+
+        // Initialize the game immediately
+        initializeGame();
+
+        // Add these functions at the end of your script section
+        function updateCountdown() {
             const now = new Date();
             const targetDate = new Date('2024-11-21T17:28:00+01:00');
             const diff = targetDate - now;
@@ -252,90 +367,33 @@
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
             
-            const message = `Mój drogi ${answers.name}! Jesteśmy razem zaledwie od ${answers.date}, ale czuję, że znamy się od ${answers.birthday}. Nie mogę doczekać się aż znowu ugotujemy ${answers.meal}. W skali od 1 do 69 tęsknię na ${answers.missing}, ale na szczęscie widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund! <3`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.location.href = `sms:+48603815422&body=${encodedMessage}`;
-            
-            // Show countdown section after small delay
-            setTimeout(() => {
-                document.getElementById('questionnaireSection').style.display = 'none';
-                document.getElementById('countdownSection').style.display = 'block';
-                updateCountdown();
-            }, 1000);
-        }
-
-        function playAudio() {
-            const audio = document.getElementById('backgroundMusic');
-            audio.play().catch(error => {
-                console.log("Audio playback failed:", error);
-            });
-        }
-
-        function updateCountdown() {
-            const today = new Date();
-            const targetDate = new Date('2024-11-21T17:28:00+01:00'); // Warsaw time (UTC+1)
-            const diffTime = targetDate - today;
-            
-            const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-            
-            document.getElementById("countdownText").innerText = 
+            document.getElementById('countdownText').textContent = 
                 `Widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund!`;
             
-            // Update every second
             setTimeout(updateCountdown, 1000);
         }
 
         function showSurprise() {
-            const surpriseBox = document.getElementById("surpriseBox");
-            const surpriseContent = document.getElementById("surpriseContent");
-            
-            playAudio();
-            
-            surpriseContent.style.display = "block";
-            void surpriseContent.offsetWidth;
-            
-            surpriseContent.style.opacity = "1";
-            surpriseBox.style.transform = "rotateY(360deg) scale(0.8)";
-            surpriseBox.style.opacity = "0";
-            
-            setTimeout(() => {
-                surpriseBox.style.display = "none";
-            }, 600);
-        }
-
-        function skipPuzzle() {
-            const now = new Date();
-            const targetDate = new Date('2024-11-21T17:28:00+01:00');
-            const diff = targetDate - now;
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            const message = `Nie mogę doczekać się tak bardzo, że aż OSZUKAŁAM twoją grę! Ale widzimy się za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund! <3`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.location.href = `sms:+48603815422&body=${encodedMessage}`;
-            
-            // Show countdown section after small delay
-            setTimeout(() => {
-                document.getElementById("questionnaireSection").style.display = "none";
-                document.getElementById("countdownSection").style.display = "block";
-                updateCountdown();
-            }, 1000);
+            const music = document.getElementById('backgroundMusic');
+            const surpriseBox = document.getElementById('surpriseBox');
+            music.play();
+            surpriseBox.style.display = 'none'; // Hide the surprise box
+            document.getElementById('surpriseContent').style.display = 'block';
         }
 
         function openSpotifySong() {
-            window.open('spotify:track:44AyOl4qVkzS48vBsbNXaC', '_blank');
-            // Fallback for mobile devices
-            setTimeout(() => {
-                window.open('https://open.spotify.com/track/44AyOl4qVkzS48vBsbNXaC', '_blank');
-            }, 1000);
+            window.location.href = "https://open.spotify.com/track/0QyZs8T7Pl6T3bm1DiRqkU?si=_7XC98a4TRGEc-9TH7WLbw";
+        }
+
+        function checkPassword() {
+            const password = prompt("Podaj hasło:");
+            if (password === "niunia") {
+                document.getElementById('memoryGameSection').style.display = 'none';
+                document.getElementById('countdownSection').style.display = 'block';
+                updateCountdown();
+            } else {
+                window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            }
         }
     </script>
 </body>

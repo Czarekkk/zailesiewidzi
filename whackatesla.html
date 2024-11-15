@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whack-a-Car</title>
+    <style>
+        .game-container {
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .hole {
+            background-color: #34495e;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .car {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            bottom: 100%;
+            transition: bottom 0.1s;
+            pointer-events: none;
+        }
+
+        .car.show {
+            bottom: 0;
+            animation: wobble 0.5s infinite;
+        }
+
+        .score-board {
+            text-align: center;
+            font-size: 2em;
+            margin: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .start-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .start-btn:hover {
+            background-color: #219a52;
+        }
+
+        .car.bonked {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+
+        .timer {
+            font-size: 2em;
+            text-align: center;
+            margin: 10px;
+            color: #e74c3c;
+        }
+
+        .high-score {
+            text-align: center;
+            font-size: 1.5em;
+            color: #f1c40f;
+        }
+
+        @keyframes wobble {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .level-info {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="high-score">High Score: <span id="highScore">0</span></div>
+    <div class="score-board">Score: <span id="score">0</span></div>
+    <div class="timer">Time: <span id="time">30</span>s</div>
+    <div class="level-info">Level: <span id="level">1</span></div>
+    <button class="start-btn" onclick="startGame()">Start Game!</button>
+    <div class="game-container">
+        <div class="hole"><img class="car" src="images/porsche.png" data-type="porsche"></div>
+        <div class="hole"><img class="car" src="images/porsche.png" data-type="porsche"></div>
+        <div class="hole"><img class="car" src="images/porsche.png" data-type="porsche"></div>
+        <div class="hole"><img class="car" src="images/tesla.png" data-type="tesla"></div>
+        <div class="hole"><img class="car" src="images/tesla.png" data-type="tesla"></div>
+        <div class="hole"><img class="car" src="images/tesla.png" data-type="tesla"></div>
+        <div class="hole"><img class="car" src="images/ferrari.png" data-type="ferrari"></div>
+        <div class="hole"><img class="car" src="images/ferrari.png" data-type="ferrari"></div>
+        <div class="hole"><img class="car" src="images/ferrari.png" data-type="ferrari"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let gameRunning = false;
+        let level = 1;
+        let timeLeft = 30;
+        let highScore = localStorage.getItem('highScore') || 0;
+        let timer;
+
+        const holes = document.querySelectorAll('.hole');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const levelDisplay = document.getElementById('level');
+        const highScoreDisplay = document.getElementById('highScore');
+        
+        highScoreDisplay.textContent = highScore;
+
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+            score = 0;
+            level = 1;
+            timeLeft = 30;
+            scoreDisplay.textContent = score;
+            levelDisplay.textContent = level;
+            updateTimer();
+            peep();
+        }
+
+        function updateTimer() {
+            timeDisplay.textContent = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(timer);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreDisplay.textContent = highScore;
+                alert(`New High Score: ${highScore}! 🎉`);
+            }
+            alert(`Game Over! Final Score: ${score}`);
+        }
+
+        function randomTime(min, max) {
+            const levelFactor = Math.max(0.5, 1 - (level * 0.1));
+            return Math.round(Math.random() * (max - min) + min) * levelFactor;
+        }
+
+        function randomHole() {
+            const idx = Math.floor(Math.random() * holes.length);
+            return holes[idx].querySelector('.car');
+        }
+
+        function peep() {
+            const time = randomTime(600, 1200);
+            const car = randomHole();
+            car.classList.add('show');
+            
+            setTimeout(() => {
+                car.classList.remove('show');
+                if (gameRunning) peep();
+            }, time);
+        }
+
+        holes.forEach(hole => {
+            hole.addEventListener('click', whack);
+        });
+
+        function whack(e) {
+            if (!e.isTrusted || !gameRunning) return;
+            const car = e.currentTarget.querySelector('.car');
+            if (!car.classList.contains('show')) return;
+            
+            const type = car.getAttribute('data-type');
+            let points = 0;
+            
+            switch(type) {
+                case 'porsche':
+                    points = 1;
+                    break;
+                case 'tesla':
+                    points = -2;
+                    break;
+                case 'ferrari':
+                    points = 2;
+                    break;
+            }
+            
+            points *= level;
+            score += points;
+            
+            car.classList.add('bonked');
+            setTimeout(() => car.classList.remove('bonked'), 100);
+            
+            const floatingScore = document.createElement('div');
+            floatingScore.textContent = points > 0 ? `+${points}` : points;
+            floatingScore.style.position = 'absolute';
+            floatingScore.style.color = points > 0 ? '#27ae60' : '#e74c3c';
+            floatingScore.style.fontSize = '24px';
+            floatingScore.style.pointerEvents = 'none';
+            floatingScore.style.animation = 'float 0.8s ease-out';
+            e.currentTarget.appendChild(floatingScore);
+            setTimeout(() => floatingScore.remove(), 800);
+
+            scoreDisplay.textContent = score;
+            car.classList.remove('show');
+
+            const newLevel = Math.floor(score / 10) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                levelDisplay.textContent = level;
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(0); opacity: 1; }
+                100% { transform: translateY(-50px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        setTimeout(() => {
+            gameRunning = false;
+        }, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Game</title>
+    <style>
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .card-front {
+            background: #2196F3;
+        }
+
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+        }
+
+        .card img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .popup p {
+            margin: 10px 0;
+            font-size: 1.2em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer"></div>
+    
+    <div class="popup" id="wrongPopup">
+        <img src="images/sad-face.png" alt="Ups!">
+        <p>Ups, spróbuj jeszcze raz!</p>
+    </div>
+    
+    <div class="popup" id="correctPopup">
+        <img src="images/happy-face.png" alt="Brawo!">
+        <p>Brawo, dostajesz buziaka!</p>
+    </div>
+
+    <script>
+        const images = [
+            'images/card1.png',
+            'images/card2.png',
+            'images/card3.png',
+            'images/card4.png',
+            'images/card5.png',
+            'images/card6.png',
+            'images/card7.png',
+            'images/card8.png'
+        ];
+
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        const wrongMessages = [
+            "Ups, spróbuj jeszcze raz!",
+            "Znowu źle, chcesz się bić?",
+            "Nieeee no idziesz do domu...",
+            "Za marzenia nie karają"
+        ];
+
+        const correctMessages = [
+            "Brawo, dostajesz buziaka!",
+            "Idziesz do domu... ale mojego!",
+            "Mmmm... Ale zdolna niunia!"
+        ];
+
+        function createCard(imageUrl) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const front = document.createElement('div');
+            front.className = 'card-front';
+            
+            const back = document.createElement('div');
+            back.className = 'card-back';
+            
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            back.appendChild(img);
+            
+            card.appendChild(front);
+            card.appendChild(back);
+            
+            return card;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initializeGame() {
+            const gameContainer = document.getElementById('gameContainer');
+            const cardPairs = [...images, ...images];
+            shuffleArray(cardPairs);
+
+            cardPairs.forEach(imageUrl => {
+                const card = createCard(imageUrl);
+                card.addEventListener('click', () => flipCard(card, imageUrl));
+                gameContainer.appendChild(card);
+            });
+        }
+
+        function flipCard(card, imageUrl) {
+            if (flippedCards.length === 2 || card.classList.contains('flipped')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push({ card, imageUrl });
+
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        function showPopup(popupId) {
+            const popup = document.getElementById(popupId);
+            
+            if (popupId === 'wrongPopup') {
+                const randomIndex = Math.floor(Math.random() * wrongMessages.length);
+                popup.querySelector('p').textContent = wrongMessages[randomIndex];
+            } else if (popupId === 'correctPopup') {
+                const randomIndex = Math.floor(Math.random() * correctMessages.length);
+                popup.querySelector('p').textContent = correctMessages[randomIndex];
+            }
+            
+            popup.classList.add('show');
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 1500);
+        }
+
+        function checkMatch() {
+            const [first, second] = flippedCards;
+            if (first.imageUrl === second.imageUrl) {
+                matchedPairs++;
+                showPopup('correctPopup');
+                if (matchedPairs === images.length) {
+                    setTimeout(() => alert('Congratulations! You won!'), 500);
+                }
+            } else {
+                showPopup('wrongPopup');
+                setTimeout(() => {
+                    first.card.classList.remove('flipped');
+                    second.card.classList.remove('flipped');
+                }, 1500);
+            }
+            flippedCards = [];
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>
