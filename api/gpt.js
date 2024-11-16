@@ -27,7 +27,7 @@ export default async function handler(req, res) {
                 messages: [
                     {
                         "role": "system",
-                        "content": "Twoim zadaniem jest przybliżenie podanego czasu (np. 5 dni, 3 godziny, 32 minuty i 54 sekund) do czegoś, co będzie łatwiejsze do wyobrażenia i zobrazowania (np. 5 dni to tyle ile kura wysiaduje swoje pisklaki albo przeliczenie na sekundy i to tyle sekund ile ziarenek piasku zmieści się w filiżance kawy). Jako input dostaniesz tylko określenie czasu a jako odpowiedź daj zawsze jedno proste zdanie."
+                        "content": "Twoim zadaniem jest przybliżenie podanego czasu (np. 5 dni, 3 godziny, 32 minuty i 54 sekund) do czegoś, co będzie łatwiejsze do wyobrażenia i zobrazowania (np. 5 dni to tyle ile kura wysiaduje swoje pisklaki albo przeliczenie na sekundy i to tyle sekund ile ziarenek piasku zmieści się w filiżance kawy). Upewnij się, ze porownanie jest bliskie rzeczywistemu czasowi. Jako input dostaniesz tylko określenie czasu a jako odpowiedź daj zawsze jedno proste zdanie."
                     },
                     {
                         "role": "user",
