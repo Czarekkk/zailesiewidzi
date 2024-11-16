@@ -88,32 +88,52 @@
         /* Countdown section styles */
         #countdownSection {
             text-align: center;
-            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        #countdownText {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         #surpriseBox {
             width: 200px;
             height: 200px;
-            margin-top: 20px;
+            margin: 20px auto;
             background-color: #ffcc00;
             border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: all 0.6s ease;
-            transform-style: preserve-3d;
-            position: relative;
+            transition: all 0.3s ease;
         }
 
-        /* Previous games section */
+        #surpriseContent {
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        #surpriseContent img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
         .previous-games {
             margin-top: 30px;
-            text-align: center;
+            padding: 20px;
         }
 
         .previous-games h3 {
-            color: #333;
             margin-bottom: 15px;
         }
 
@@ -172,12 +192,6 @@
             margin: 0 auto;
         }
 
-        #surpriseContent {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
         .skip-button {
             display: block;
             margin: 20px auto;
@@ -192,31 +206,143 @@
         .skip-button:hover {
             background: #ffd633;
         }
+
+        #gameIntro {
+            text-align: center;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .road-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .road {
+            width: 100%;
+            height: 100%;
+            background: url('images/road-curve.png') no-repeat center;
+            background-size: contain;
+            position: relative;
+        }
+
+        .car {
+            position: absolute;
+            width: 120px;
+            height: 60px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: left 0.5s linear, top 0.5s linear, transform 0.5s linear;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .lives {
+            display: flex;
+            gap: 10px;
+        }
+
+        .life {
+            width: 30px;
+            height: 30px;
+            background: url('images/ferrari.png') no-repeat center;
+            background-size: contain;
+            display: inline-block;
+        }
+
+        .game-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .game-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #ffcc00;
+        }
+
+        .game-button:hover {
+            background: #ffd633;
+        }
+
+        /* Make sure everything stays responsive */
+        @media (max-width: 600px) {
+            #countdownSection {
+                padding: 10px;
+            }
+
+            #countdownText {
+                font-size: 20px;
+                padding: 15px;
+            }
+
+            #surpriseBox {
+                width: 150px;
+                height: 150px;
+            }
+
+            .previous-games a {
+                margin: 5px;
+                padding: 8px 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="memoryGameSection">
-        <div class="game-container" id="gameContainer"></div>
-        
-        <div class="popup" id="wrongPopup">
-            <img src="images/sad-face.png" alt="Ups!">
-            <p>Ups, spróbuj jeszcze raz!</p>
-        </div>
-        
-        <div class="popup" id="correctPopup">
-            <img src="images/happy-face.png" alt="Brawo!">
-            <p>Brawo, dostajesz buziaka!</p>
-        </div>
-        <button onclick="checkPassword()" class="skip-button">To za trudne, pomijam</button>
+    <div id="gameIntro" style="text-align: center; margin: 20px;">
+        <h2>Jak myślisz, za ile sekund się zobaczymy?</h2>
+        <input type="number" id="secondsGuess" min="0" style="padding: 10px; font-size: 16px; margin: 10px;">
+        <button onclick="checkGuess()" class="game-button">Sprawdź!</button>
+    </div>
+
+    <div id="guessResult" style="display: none; text-align: center; margin: 20px;">
+        <h2 id="resultText"></h2>
     </div>
 
     <div id="countdownSection" style="display: none;">
         <h2 id="countdownText">Widzimy się już za X dni!</h2>
+        <p id="gptComparison" style="font-style: italic; margin: 20px 0; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 5px;">
+            <!-- GPT response will be inserted here -->
+        </p>
         <div id="surpriseBox" onclick="showSurprise()">
             <p>Dzisiejsza niespodzianka</p>
         </div>
         <div id="surpriseContent" style="display: none;">
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXh0Y3ZhNTI5ZXRkNXhxYm02eXBkYmM4NTc5Z24wOWFhN3Vrd3h2diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/c76IJLufpNwSULPk77/giphy.gif" alt="Surprise GIF" style="width: 100%; height: auto;">
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXh0Y3ZhNTI5ZXRkNXhxYm02eXBkYmM4NTc5Z24wOWFhN3Vrd3h2diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/c76IJLufpNwSULPk77/giphy.gif" alt="Surprise GIF">
             <p>Już o jeden dzień mniej do naszego spotkania 🥺</p>
             <button onclick="openSpotifySong()" style="background-color: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background-color 0.3s ease;">
                 Odbierz piosenkę w prezencie 🎵
@@ -227,6 +353,7 @@
             <a href="questionnaire.html">Quiz o Czarku</a>
             <a href="whackatesla.html">Whack-a-Tesla</a>
             <a href="wheel.html">Koło Fortuny</a>
+            <a href="memory-game.html">Memory Game</a>
         </div>
     </div>
 
@@ -235,126 +362,68 @@
     </audio>
 
     <script>
-        // Memory game code
-        const images = [
-            'images/card1.png',
-            'images/card2.png',
-            'images/card3.png',
-            'images/card4.png',
-            'images/card5.png',
-            'images/card6.png',
-            'images/card7.png',
-            'images/card8.png'
-        ];
-
-        let flippedCards = [];
-        let matchedPairs = 0;
-
-        const wrongMessages = [
-            "Ups, spróbuj jeszcze raz!",
-            "Znowu źle, chcesz się bić?",
-            "Nieeee no idziesz do domu...",
-            "Za marzenia nie karają"
-        ];
-
-        const correctMessages = [
-            "Brawo, dostajesz buziaka!",
-            "Idziesz do domu... ale mojego!",
-            "Mmmm... Ale zdolna niunia!"
-        ];
-
-        function createCard(imageUrl) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            const front = document.createElement('div');
-            front.className = 'card-front';
-            
-            const back = document.createElement('div');
-            back.className = 'card-back';
-            
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            back.appendChild(img);
-            
-            card.appendChild(front);
-            card.appendChild(back);
-            
-            return card;
+        function getSecondsUntilMeeting() {
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            return Math.floor((targetDate - now) / 1000);
         }
 
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
+        async function getGPTComparison(timeString) {
+            try {
+                const response = await fetch('/api/gpt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ timeString })
+                });
 
-        function initializeGame() {
-            const gameContainer = document.getElementById('gameContainer');
-            const cardPairs = [...images, ...images];
-            shuffleArray(cardPairs);
-
-            cardPairs.forEach(imageUrl => {
-                const card = createCard(imageUrl);
-                card.addEventListener('click', () => flipCard(card, imageUrl));
-                gameContainer.appendChild(card);
-            });
-        }
-
-        function flipCard(card, imageUrl) {
-            if (flippedCards.length === 2 || card.classList.contains('flipped')) return;
-
-            card.classList.add('flipped');
-            flippedCards.push({ card, imageUrl });
-
-            if (flippedCards.length === 2) {
-                setTimeout(checkMatch, 1000);
+                const data = await response.json();
+                return data.response;
+            } catch (error) {
+                console.error('Error:', error);
+                return null;
             }
         }
 
-        function showPopup(popupId) {
-            const popup = document.getElementById(popupId);
+        async function checkGuess() {
+            const guess = parseInt(document.getElementById('secondsGuess').value);
+            if (isNaN(guess)) return;
+
+            const actualSeconds = getSecondsUntilMeeting();
+            const difference = Math.abs(guess - actualSeconds);
+
+            document.getElementById('gameIntro').style.display = 'none';
+            document.getElementById('guessResult').style.display = 'block';
+            document.getElementById('resultText').textContent = 
+                `Prawie! Pomyliłaś się o ${difference} sekund. Ale i tak czeka cię nagroda!`;
+
+            // Get initial countdown text
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
             
-            if (popupId === 'wrongPopup') {
-                const randomIndex = Math.floor(Math.random() * wrongMessages.length);
-                popup.querySelector('p').textContent = wrongMessages[randomIndex];
-            } else if (popupId === 'correctPopup') {
-                const randomIndex = Math.floor(Math.random() * correctMessages.length);
-                popup.querySelector('p').textContent = correctMessages[randomIndex];
+            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
+            
+            // Get GPT comparison
+            const gptResponse = await getGPTComparison(timeString);
+            
+            // Store GPT response in localStorage to avoid making multiple requests
+            if (gptResponse) {
+                localStorage.setItem('gptComparison', gptResponse);
             }
-            
-            popup.classList.add('show');
+
+            // Show countdown after 2 seconds
             setTimeout(() => {
-                popup.classList.remove('show');
-            }, 1500);
+                document.getElementById('guessResult').style.display = 'none';
+                document.getElementById('countdownSection').style.display = 'block';
+                updateCountdown();
+            }, 2000);
         }
-
-        function checkMatch() {
-            const [first, second] = flippedCards;
-            if (first.imageUrl === second.imageUrl) {
-                matchedPairs++;
-                showPopup('correctPopup');
-                if (matchedPairs === images.length) {
-                    setTimeout(() => {
-                        document.getElementById('memoryGameSection').style.display = 'none';
-                        document.getElementById('countdownSection').style.display = 'block';
-                        updateCountdown();
-                    }, 1500);
-                }
-            } else {
-                showPopup('wrongPopup');
-                setTimeout(() => {
-                    first.card.classList.remove('flipped');
-                    second.card.classList.remove('flipped');
-                }, 1500);
-            }
-            flippedCards = [];
-        }
-
-        // Initialize the game immediately
-        initializeGame();
 
         // Add these functions at the end of your script section
         function updateCountdown() {
@@ -369,6 +438,12 @@
             
             document.getElementById('countdownText').textContent = 
                 `Widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund!`;
+            
+            // Display stored GPT comparison if available
+            const gptComparison = localStorage.getItem('gptComparison');
+            if (gptComparison) {
+                document.getElementById('gptComparison').textContent = gptComparison;
+            }
             
             setTimeout(updateCountdown, 1000);
         }
@@ -394,6 +469,173 @@
             } else {
                 window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
             }
+        }
+
+        let gameSpeed = 4000;
+        let lives = 5;
+        let teslaScore = 0;
+        let porscheScore = 0;
+        let currentCar = null;
+        let gameInterval;
+        let gameOver = false;
+
+        function startGame() {
+            document.getElementById('gameIntro').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            spawnCar();
+        }
+
+        function spawnCar() {
+            // Adjust probabilities: more Tesla than Porsche
+            // 60% Renault, 30% Tesla, 10% Porsche
+            const random = Math.random();
+            let carType;
+            
+            if (random < 0.6) {
+                carType = 'renault';
+            } else if (random < 0.9) {
+                carType = 'tesla';
+            } else {
+                carType = 'porsche';
+            }
+            
+            const car = document.createElement('div');
+            car.className = 'car';
+            car.style.backgroundImage = `url('images/${carType}.png')`;
+            car.style.left = '-60px';
+            car.style.top = '450px';
+            
+            document.querySelector('.road').appendChild(car);
+            
+            currentCar = {
+                element: car,
+                type: carType
+            };
+
+            animateCar(car);
+        }
+
+        function animateCar(car) {
+            const path = [
+                { left: '-60px', top: '450px' },     // Start off-screen
+                { left: '100px', top: '450px' },     // Straight section
+                { left: '200px', top: '450px' },     // Approach first curve
+                { left: '250px', top: '450px' },     // Start curve
+                { left: '300px', top: '425px' },     // Curving up
+                { left: '325px', top: '375px' },     // Curving up
+                { left: '350px', top: '300px' },     // Middle of first curve
+                { left: '350px', top: '250px' },     // Straight middle section
+                { left: '350px', top: '200px' },     // Straight middle section
+                { left: '350px', top: '150px' },     // Approach second curve
+                { left: '375px', top: '125px' },     // Start second curve
+                { left: '400px', top: '100px' },     // Curving right
+                { left: '450px', top: '100px' },     // Finishing curve
+                { left: '500px', top: '100px' },     // Straight final section
+                { left: '600px', top: '100px' },     // Exit path
+                { left: '850px', top: '100px' }      // Off screen
+            ];
+
+            let currentPoint = 0;
+            
+            function moveToNextPoint() {
+                if (currentPoint >= path.length) {
+                    car.remove();
+                    if (currentCar && (currentCar.type === 'tesla' || currentCar.type === 'porsche')) {
+                        loseLife();
+                    }
+                    spawnCar();
+                    return;
+                }
+
+                const point = path[currentPoint];
+                car.style.left = point.left;
+                car.style.top = point.top;
+                
+                // Rotate the car based on its direction
+                if (currentPoint > 0) {
+                    const prevPoint = path[currentPoint - 1];
+                    const dx = parseInt(point.left) - parseInt(prevPoint.left);
+                    const dy = parseInt(point.top) - parseInt(prevPoint.top);
+                    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                    car.style.transform = `rotate(${angle}deg)`;
+                }
+                
+                currentPoint++;
+                setTimeout(moveToNextPoint, gameSpeed / path.length);
+            }
+
+            moveToNextPoint();
+        }
+
+        function identifyCar(guess) {
+            if (!currentCar) return;
+            
+            if (currentCar.type === guess) {
+                if (guess === 'tesla') teslaScore++;
+                if (guess === 'porsche') porscheScore++;
+                
+                document.getElementById('teslaScore').textContent = teslaScore;
+                document.getElementById('porscheScore').textContent = porscheScore;
+                
+                gameSpeed = Math.max(500, gameSpeed - 50);
+            } else {
+                loseLife();
+            }
+            
+            currentCar.element.remove();
+            currentCar = null;
+            spawnCar();
+        }
+
+        function loseLife() {
+            lives--;
+            const livesElements = document.querySelectorAll('.life');
+            if (lives >= 0 && livesElements[lives]) {
+                livesElements[lives].style.display = 'none';
+            }
+            
+            if (lives <= 0) {
+                // Ensure we only call endGame once
+                if (currentCar) {
+                    currentCar.element.remove();
+                    currentCar = null;
+                }
+                endGame();
+            }
+        }
+
+        function endGame() {
+            // Only proceed if game isn't already over
+            if (gameOver) return;
+            gameOver = true;
+            
+            // Clear any existing timeouts or intervals
+            clearTimeout(gameInterval);
+            
+            const message = `No dzisiaj to wygrałeś - widziałam ${teslaScore} tesli i tylko ${porscheScore} porshe... Dobrze, że widzimy się już za ${getCountdown()} <3`;
+            
+            // Only show popup once
+            if (confirm('Podziel się wynikiem?')) {
+                window.location.href = `sms:+48603815422&body=${encodeURIComponent(message)}`;
+            }
+            
+            // Hide game container and show countdown immediately
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('countdownSection').style.display = 'block';
+            updateCountdown();
+        }
+
+        function getCountdown() {
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            return `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
         }
     </script>
 </body>
