@@ -21,6 +21,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
     
     <style>
         body {
@@ -378,11 +379,16 @@
                     body: JSON.stringify({ timeString })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
+                console.log('GPT Response:', data); // For debugging
                 return data.response;
             } catch (error) {
                 console.error('Error:', error);
-                return null;
+                return 'To tyle czasu, ile potrzeba na przeczytanie wszystkich książek Harry\'ego Pottera!'; // Fallback response
             }
         }
 
