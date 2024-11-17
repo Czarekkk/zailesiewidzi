@@ -737,11 +737,35 @@
             initGame();
         }
 
-        function proceedToCountdown(e) {
+        async function getGPTComparison(timeString) {
+            try {
+                const response = await fetch('/api/gpt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ timeString })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('GPT Response:', data); // For debugging
+                return data.response;
+            } catch (error) {
+                console.error('Error:', error);
+                return 'To tyle czasu, ile potrzeba na przeczytanie wszystkich książek Harry\'ego Pottera!'; // Fallback response
+            }
+        }
+
+        async function proceedToCountdown(e) {
             // Prevent default behavior if it's a touch event
             if (e && e.type === 'touchstart') {
                 e.preventDefault();
             }
+            
             document.getElementById('flappyGame').style.display = 'none';
             document.getElementById('countdownSection').style.display = 'block';
             
@@ -752,6 +776,26 @@
                 backgroundMusic.play().catch(error => {
                     console.log('Music play failed:', error);
                 });
+            }
+            
+            // Get initial countdown text for GPT comparison
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
+            
+            // Get GPT comparison
+            const gptResponse = await getGPTComparison(timeString);
+            
+            // Store GPT response in localStorage to avoid making multiple requests
+            if (gptResponse) {
+                localStorage.setItem('gptComparison', gptResponse);
+                document.getElementById('gptComparison').textContent = gptResponse;
             }
             
             updateCountdown();
