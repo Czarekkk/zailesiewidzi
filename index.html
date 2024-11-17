@@ -406,6 +406,19 @@
             -moz-user-select: none;
             -ms-user-select: none;
         }
+
+        #surpriseBox, #surpriseContent button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #surpriseBox:hover, #surpriseContent button:hover {
+            background-color: #ffd633;
+        }
     </style>
 </head>
 <body>
@@ -433,13 +446,14 @@
         <p id="gptComparison" style="font-style: italic; margin: 20px 0; padding: 10px; background: rgba(255,255,255,0.7); border-radius: 5px;">
             <!-- GPT response will be inserted here -->
         </p>
-        <div id="surpriseBox" onclick="showSurprise()">
+        <div id="surpriseBox" ontouchstart="showSurprise(event)" onclick="showSurprise(event)">
             <p>Dzisiejsza niespodzianka</p>
         </div>
         <div id="surpriseContent" style="display: none;">
             <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2p0Z3Z6dTdkOHhzajI2bjFqcWt1a3pjZjI0ZHdjMDZpbnFrNTg4cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l4pTdcifPZLpDjL1e/giphy.gif" alt="Surprise GIF">
             <p>Już naprawdę niedługo! 🥺</p>
-            <button onclick="openSpotifySong()" style="background-color: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background-color 0.3s ease;">
+            <button ontouchstart="openSpotifySong(event)" onclick="openSpotifySong(event)" 
+                    style="background-color: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background-color 0.3s ease;">
                 Odbierz piosenkę w prezencie 🎵
             </button>
         </div>
@@ -765,7 +779,11 @@
             setTimeout(updateCountdown, 1000);
         }
 
-        function showSurprise() {
+        function showSurprise(e) {
+            // Prevent default behavior if it's a touch event
+            if (e && e.type === 'touchstart') {
+                e.preventDefault();
+            }
             const surpriseBox = document.getElementById('surpriseBox');
             const surpriseContent = document.getElementById('surpriseContent');
             
@@ -773,7 +791,11 @@
             surpriseContent.style.display = 'block';
         }
 
-        function openSpotifySong() {
+        function openSpotifySong(e) {
+            // Prevent default behavior if it's a touch event
+            if (e && e.type === 'touchstart') {
+                e.preventDefault();
+            }
             window.open('https://open.spotify.com/track/5FmTAZVK4O1rDBGn0RYd7t?si=WotckdUdRCaZvaLdfaCoXg&context=spotify%3Aalbum%3A2oPA8Q5sam7nqBCxPjxbK7', '_blank');
         }
 
