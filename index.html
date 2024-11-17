@@ -392,6 +392,19 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .game-over button:hover {
+            background: #ffd633;
+        }
+
+        .game-over button {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
     </style>
 </head>
@@ -410,8 +423,8 @@
             <h2>Koniec gry!</h2>
             <p>Twój wynik: <span class="final-score">0</span></p>
             <p>Najlepszy wynik: <span class="best-score">0</span></p>
-            <button onclick="restartGame()">Zagraj jeszcze raz</button>
-            <button onclick="proceedToCountdown()">Przejdź dalej</button>
+            <button class="game-button" ontouchstart="restartGame()" onclick="restartGame()">Zagraj jeszcze raz</button>
+            <button class="game-button" ontouchstart="proceedToCountdown()" onclick="proceedToCountdown()">Przejdź dalej</button>
         </div>
     </div>
 
@@ -702,11 +715,19 @@
             playSound('tryagainSound');
         }
 
-        function restartGame() {
+        function restartGame(e) {
+            // Prevent default behavior if it's a touch event
+            if (e && e.type === 'touchstart') {
+                e.preventDefault();
+            }
             initGame();
         }
 
-        function proceedToCountdown() {
+        function proceedToCountdown(e) {
+            // Prevent default behavior if it's a touch event
+            if (e && e.type === 'touchstart') {
+                e.preventDefault();
+            }
             document.getElementById('flappyGame').style.display = 'none';
             document.getElementById('countdownSection').style.display = 'block';
             
