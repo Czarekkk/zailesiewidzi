@@ -647,7 +647,11 @@
                     pipe.passed = true;
                     score++;
                     document.querySelector('.score-display').textContent = score;
-                    playRandomSuccessSound();
+                    
+                    // Play success sound only every 5 points
+                    if (score % 5 === 0) {
+                        playRandomSuccessSound();
+                    }
                     
                     if (score > highScore) {
                         highScore = score;
