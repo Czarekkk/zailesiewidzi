@@ -506,6 +506,7 @@
         const MIN_PIPE_DISTANCE = 200;  // Minimum distance between pipes
         const MAX_PIPE_DISTANCE = 300;  // Maximum distance between pipes
         let lastPipePosition = -1;  // Track the position of the last pipe
+        let gptComparisonCache = null;
 
         // Sound functions need to be defined before they're used
         function playSound(soundId) {
@@ -724,9 +725,31 @@
             document.querySelector('.best-score').textContent = highScore;
             document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
             
+            // Pre-load GPT comparison
+            preloadGPTComparison();
+            
             // Show game over screen and play sound
             document.querySelector('.game-over').style.display = 'block';
             playSound('tryagainSound');
+        }
+
+        async function preloadGPTComparison() {
+            const now = new Date();
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const diff = targetDate - now;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
+            
+            try {
+                gptComparisonCache = await getGPTComparison(timeString);
+            } catch (error) {
+                console.error('Error preloading GPT comparison:', error);
+            }
         }
 
         function restartGame(e) {
@@ -780,32 +803,34 @@
                 });
             }
             
-            // Get initial countdown text for GPT comparison
-            const now = new Date();
-            const targetDate = new Date('2024-11-21T17:28:00+01:00');
-            const diff = targetDate - now;
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
-            
-            try {
-                // Get GPT comparison
-                const gptResponse = await getGPTComparison(timeString);
+            // Use the pre-loaded comparison if available
+            if (gptComparisonCache) {
+                localStorage.setItem('gptComparison', gptComparisonCache);
+                document.getElementById('gptComparison').textContent = gptComparisonCache;
+            } else {
+                // Fallback to loading it now if pre-load failed
+                const now = new Date();
+                const targetDate = new Date('2024-11-21T17:28:00+01:00');
+                const diff = targetDate - now;
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
                 
-                // Store GPT response in localStorage to avoid making multiple requests
-                if (gptResponse) {
-                    localStorage.setItem('gptComparison', gptResponse);
-                    document.getElementById('gptComparison').textContent = gptResponse;
-                }
-            } catch (error) {
-                console.error('Error getting GPT comparison:', error);
-                // Use fallback if stored comparison exists
-                const storedComparison = localStorage.getItem('gptComparison');
-                if (storedComparison) {
-                    document.getElementById('gptComparison').textContent = storedComparison;
+                const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
+                
+                try {
+                    const gptResponse = await getGPTComparison(timeString);
+                    if (gptResponse) {
+                        localStorage.setItem('gptComparison', gptResponse);
+                        document.getElementById('gptComparison').textContent = gptResponse;
+                    }
+                } catch (error) {
+                    console.error('Error getting GPT comparison:', error);
+                    const storedComparison = localStorage.getItem('gptComparison');
+                    if (storedComparison) {
+                        document.getElementById('gptComparison').textContent = storedComparison;
+                    }
                 }
             }
             
