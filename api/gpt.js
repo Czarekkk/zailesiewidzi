@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
     // Handle CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', 'https://www.zailesiewidzi.my');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-                model: "gpt-4o",
+                model: "gpt-4",
                 messages: [
                     {
                         "role": "system",

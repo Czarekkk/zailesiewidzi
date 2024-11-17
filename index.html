@@ -739,7 +739,8 @@
 
         async function getGPTComparison(timeString) {
             try {
-                const response = await fetch('/api/gpt', {
+                // Use the correct path to your API endpoint
+                const response = await fetch('api/gpt', {  // or '/api/gpt' depending on your setup
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -756,7 +757,8 @@
                 return data.response;
             } catch (error) {
                 console.error('Error:', error);
-                return 'To tyle czasu, ile potrzeba na przeczytanie wszystkich książek Harry\'ego Pottera!'; // Fallback response
+                // Provide a fallback response if the API call fails
+                return 'To tyle czasu, ile potrzeba na przeczytanie wszystkich książek Harry\'ego Pottera!';
             }
         }
 
@@ -789,13 +791,22 @@
             
             const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
             
-            // Get GPT comparison
-            const gptResponse = await getGPTComparison(timeString);
-            
-            // Store GPT response in localStorage to avoid making multiple requests
-            if (gptResponse) {
-                localStorage.setItem('gptComparison', gptResponse);
-                document.getElementById('gptComparison').textContent = gptResponse;
+            try {
+                // Get GPT comparison
+                const gptResponse = await getGPTComparison(timeString);
+                
+                // Store GPT response in localStorage to avoid making multiple requests
+                if (gptResponse) {
+                    localStorage.setItem('gptComparison', gptResponse);
+                    document.getElementById('gptComparison').textContent = gptResponse;
+                }
+            } catch (error) {
+                console.error('Error getting GPT comparison:', error);
+                // Use fallback if stored comparison exists
+                const storedComparison = localStorage.getItem('gptComparison');
+                if (storedComparison) {
+                    document.getElementById('gptComparison').textContent = storedComparison;
+                }
             }
             
             updateCountdown();
