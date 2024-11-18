@@ -406,6 +406,22 @@
         * {
             touch-action: manipulation;
         }
+
+        .spotify-button {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .spotify-button:hover {
+            background-color: #1ed760;
+        }
     </style>
 </head>
 <body>
@@ -436,22 +452,13 @@
             <p>Dzisiejsza niespodzianka</p>
         </div>
         <div id="surpriseContent" style="display: none;">
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2p0Z3Z6dTdkOHhzajI2bjFqcWt1a3pjZjI0ZHdjMDZpbnFrNTg4cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l4pTdcifPZLpDjL1e/giphy.gif" alt="Surprise GIF">
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBzdWlkYTg0NnBpcjhla2hhM2t6ZW4wZnBpY2E4OGJqeHBkZzY1bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J3CIIP78dYe6Y0TLSE/giphy.gif" alt="Surprise GIF">
             <p>Już naprawdę niedługo! 🥺</p>
-            <button id="spotifyButton" 
-                    style="background-color: #1DB954; 
-                           color: white; 
-                           border: none; 
-                           padding: 10px 20px; 
-                           border-radius: 20px; 
-                           font-size: 16px; 
-                           cursor: pointer; 
-                           margin-top: 10px; 
-                           transition: background-color 0.3s ease;
-                           -webkit-tap-highlight-color: transparent;
-                           touch-action: manipulation;">
+            <a href="https://open.spotify.com/track/3odrUVQ9tvRpkC9II2oWzx?si=w-KI0B9CRgqbkVvUAauvrA" 
+               target="_blank" 
+               class="spotify-button">
                 Odbierz piosenkę w prezencie 🎵
-            </button>
+            </a>
         </div>
         <div class="previous-games">
             <h3>Zagraj w gry z poprzednich dni:</h3>
@@ -902,8 +909,9 @@
         // Add this to your script section
         window.addEventListener('message', function(event) {
             if (event.data === 'mazeCompleted') {
-                // Hide the maze game
+                // Hide the maze game and skip button
                 document.getElementById('mainGame').style.display = 'none';
+                document.querySelector('.skip-button').style.display = 'none';
                 
                 // Show countdown section
                 const countdownSection = document.getElementById('countdownSection');
@@ -931,10 +939,8 @@
         });
 
         function skipToCountdown() {
-            // Hide the maze game
+            // Hide the maze game and skip button
             document.getElementById('mainGame').style.display = 'none';
-            
-            // Hide the skip button
             document.querySelector('.skip-button').style.display = 'none';
             
             // Show countdown section
