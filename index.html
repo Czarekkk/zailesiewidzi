@@ -196,12 +196,15 @@
         .skip-button {
             display: block;
             margin: 20px auto;
-            padding: 10px 20px;
+            padding: 15px 30px;
             background: #ffcc00;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .skip-button:hover {
@@ -320,6 +323,12 @@
                 margin: 5px;
                 padding: 8px 16px;
             }
+
+            .skip-button {
+                padding: 12px 24px;
+                font-size: 14px;
+                margin: 15px auto;
+            }
         }
 
         #mainGame {
@@ -370,6 +379,10 @@
                 allowfullscreen>
         </iframe>
     </div>
+
+    <button class="skip-button" onclick="skipToCountdown()">
+        Dawaj mi ten timer, nie mogę się doczekać! 🕒
+    </button>
 
     <div id="countdownSection" style="display: none;">
         <h2 id="countdownText">Widzimy się już za X dni!</h2>
@@ -845,6 +858,37 @@
                 });
             }
         });
+
+        function skipToCountdown() {
+            // Hide the maze game
+            document.getElementById('mainGame').style.display = 'none';
+            
+            // Hide the skip button
+            document.querySelector('.skip-button').style.display = 'none';
+            
+            // Show countdown section
+            const countdownSection = document.getElementById('countdownSection');
+            countdownSection.style.display = 'block';
+            countdownSection.scrollIntoView({ behavior: 'smooth' });
+
+            // Start playing background music
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            if (backgroundMusic) {
+                backgroundMusic.volume = 0.5;
+                backgroundMusic.play().catch(error => {
+                    console.log('Music play failed:', error);
+                });
+            }
+
+            // Initialize countdown and GPT comparison
+            updateCountdown();
+            preloadGPTComparison().then(() => {
+                if (gptComparisonCache) {
+                    localStorage.setItem('gptComparison', gptComparisonCache);
+                    document.getElementById('gptComparison').textContent = gptComparisonCache;
+                }
+            });
+        }
     </script>
 </body>
 </html>
