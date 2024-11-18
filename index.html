@@ -821,10 +821,28 @@
                 // Hide the maze game
                 document.getElementById('mainGame').style.display = 'none';
                 
-                // Show and scroll to countdown section
+                // Show countdown section
                 const countdownSection = document.getElementById('countdownSection');
                 countdownSection.style.display = 'block';
                 countdownSection.scrollIntoView({ behavior: 'smooth' });
+
+                // Start playing background music
+                const backgroundMusic = document.getElementById('backgroundMusic');
+                if (backgroundMusic) {
+                    backgroundMusic.volume = 0.5; // Set volume to 50%
+                    backgroundMusic.play().catch(error => {
+                        console.log('Music play failed:', error);
+                    });
+                }
+
+                // Initialize countdown and GPT comparison
+                updateCountdown();
+                preloadGPTComparison().then(() => {
+                    if (gptComparisonCache) {
+                        localStorage.setItem('gptComparison', gptComparisonCache);
+                        document.getElementById('gptComparison').textContent = gptComparisonCache;
+                    }
+                });
             }
         });
     </script>
