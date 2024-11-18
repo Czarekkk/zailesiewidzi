@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flappy Bird</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #fdf6e3;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #flappyGame {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            margin: 20px auto;
+            overflow: hidden;
+            background: #70c5ce;
+            border-radius: 10px;
+        }
+
+        .bird {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            background: url('images/bird.png') no-repeat center center;
+            background-size: contain;
+            transition: transform 0.1s;
+        }
+
+        .pipe {
+            position: absolute;
+            width: 60px;
+            background: #2ecc71;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .high-score-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .game-over button {
+            margin: 10px;
+            padding: 10px 20px;
+            background: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .game-over button:hover {
+            background: #ffd633;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            background: #ffd633;
+        }
+
+        @media (max-width: 600px) {
+            #flappyGame {
+                width: 100%;
+                height: 500px;
+                margin: 0;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">← Wróć</button>
+    
+    <div id="flappyGame">
+        <div class="score-display">0</div>
+        <div class="high-score-display">Best: 0</div>
+        <div class="bird"></div>
+        
+        <div class="game-over">
+            <h2>Game Over!</h2>
+            <p>Wynik: <span class="final-score">0</span></p>
+            <p>Najlepszy wynik: <span class="best-score">0</span></p>
+            <button onclick="initGame()">Zagraj ponownie</button>
+            <button onclick="window.location.href='index.html'">Wróć do strony głównej</button>
+        </div>
+    </div>
+
+    <!-- Game sound effects -->
+    <audio id="bounceSound" preload="auto">
+        <source src="sounds/bounce.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="upsSound" preload="auto">
+        <source src="sounds/ups.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="tryagainSound" preload="auto">
+        <source src="sounds/tryagain.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="brawoSound" preload="auto">
+        <source src="sounds/brawo.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="niezleSound" preload="auto">
+        <source src="sounds/niezle.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="superSound" preload="auto">
+        <source src="sounds/super.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let bird;
+        let gameLoop;
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem('flappyHighScore') || 0;
+        let birdVelocity = 0;
+        const gravity = 0.5;
+        const jumpStrength = -10;
+        let pipes = [];
+        const MIN_PIPE_DISTANCE = 1500; // Minimum distance between pipes in milliseconds
+        const MAX_PIPE_DISTANCE = 2500; // Maximum distance between pipes in milliseconds
+        let lastPipePosition = -1;
+
+        function playSound(soundId) {
+            const sound = document.getElementById(soundId);
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Sound play failed:", e));
+        }
+
+        function playRandomSuccessSound() {
+            const sounds = ['brawoSound', 'niezleSound', 'superSound'];
+            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+            playSound(randomSound);
+        }
+
+        function handleJump(e) {
+            if (e.type === 'keydown' && e.code !== 'Space') return;
+            e.preventDefault();
+            if (!gameActive) {
+                initGame();
+                return;
+            }
+            birdVelocity = jumpStrength;
+            playSound('bounceSound');
+        }
+
+        function initGame() {
+            bird = document.querySelector('.bird');
+            bird.style.left = '50px';
+            bird.style.top = '250px';
+            score = 0;
+            birdVelocity = 0;
+            gameActive = true;
+            pipes = [];
+            lastPipePosition = -1;
+            document.querySelector('.score-display').textContent = '0';
+            document.querySelector('.game-over').style.display = 'none';
+            
+            // Clear existing pipes
+            document.querySelectorAll('.pipe').forEach(pipe => pipe.remove());
+            
+            // Start game loop
+            gameLoop = setInterval(updateGame, 20);
+            setTimeout(createPipe, 0);
+            
+            // Event listeners for all control types
+            document.addEventListener('keydown', handleJump);
+            document.addEventListener('touchstart', handleJump);
+            document.addEventListener('mousedown', handleJump);
+            document.addEventListener('touchend', (e) => e.preventDefault());
+            
+            // Update high score display
+            document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
+        }
+
+        function createPipe() {
+            if (!gameActive) return;
+            
+            // Check if we're too close to the last pipe
+            if (lastPipePosition !== -1 && lastPipePosition > 400 - MIN_PIPE_DISTANCE) {
+                setTimeout(createPipe, 100);
+                return;
+            }
+
+            const gapHeight = 150;
+            const minGapTop = 100;
+            const maxGapTop = 400;
+            const gapPosition = Math.random() * (maxGapTop - minGapTop) + minGapTop;
+
+            const topPipe = document.createElement('div');
+            topPipe.className = 'pipe';
+            topPipe.style.height = gapPosition + 'px';
+            topPipe.style.top = '0';
+            topPipe.style.left = '400px';
+
+            const bottomPipe = document.createElement('div');
+            bottomPipe.className = 'pipe';
+            bottomPipe.style.height = (600 - gapPosition - gapHeight) + 'px';
+            bottomPipe.style.bottom = '0';
+            bottomPipe.style.left = '400px';
+
+            document.getElementById('flappyGame').appendChild(topPipe);
+            document.getElementById('flappyGame').appendChild(bottomPipe);
+
+            pipes.push({ top: topPipe, bottom: bottomPipe, passed: false });
+            lastPipePosition = 400;
+
+            const randomDelay = Math.random() * (MAX_PIPE_DISTANCE - MIN_PIPE_DISTANCE) + MIN_PIPE_DISTANCE;
+            const speedMultiplier = Math.max(0.7, 1 - (score * 0.02));
+            const finalDelay = randomDelay * speedMultiplier;
+            
+            setTimeout(createPipe, finalDelay);
+        }
+
+        function updateGame() {
+            if (!gameActive) return;
+            
+            birdVelocity += gravity;
+            const birdTop = parseFloat(bird.style.top);
+            const newTop = birdTop + birdVelocity;
+            
+            if (newTop < 0) {
+                bird.style.top = '0px';
+                birdVelocity = 0;
+            } else if (newTop > 570) {
+                bird.style.top = '570px';
+                endGame();
+            } else {
+                bird.style.top = newTop + 'px';
+            }
+            
+            const rotation = Math.min(Math.max(birdVelocity * 3, -30), 90);
+            bird.style.transform = `rotate(${rotation}deg)`;
+            
+            pipes.forEach((pipe, index) => {
+                const pipeLeft = parseFloat(pipe.top.style.left);
+                const pipeSpeed = Math.min(4, 2 + (score * 0.1));
+                const newLeft = pipeLeft - pipeSpeed;
+                
+                pipe.top.style.left = newLeft + 'px';
+                pipe.bottom.style.left = newLeft + 'px';
+                
+                if (index === pipes.length - 1) {
+                    lastPipePosition = newLeft;
+                }
+                
+                if (checkCollision(pipe)) {
+                    playSound('upsSound');
+                    endGame();
+                    return;
+                }
+                
+                if (!pipe.passed && newLeft < 50) {
+                    pipe.passed = true;
+                    score++;
+                    document.querySelector('.score-display').textContent = score;
+                    
+                    if (score % 5 === 0) {
+                        playRandomSuccessSound();
+                    }
+                    
+                    if (score > highScore) {
+                        highScore = score;
+                        document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
+                    }
+                }
+                
+                if (newLeft < -60) {
+                    pipe.top.remove();
+                    pipe.bottom.remove();
+                    pipes.splice(index, 1);
+                }
+            });
+        }
+
+        function checkCollision(pipe) {
+            const birdRect = bird.getBoundingClientRect();
+            const topPipeRect = pipe.top.getBoundingClientRect();
+            const bottomPipeRect = pipe.bottom.getBoundingClientRect();
+            
+            return (
+                birdRect.right > topPipeRect.left &&
+                birdRect.left < topPipeRect.right && (
+                    birdRect.top < topPipeRect.bottom ||
+                    birdRect.bottom > bottomPipeRect.top
+                )
+            );
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameLoop);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('flappyHighScore', highScore);
+            }
+            
+            document.querySelector('.final-score').textContent = score;
+            document.querySelector('.best-score').textContent = highScore;
+            document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
+            document.querySelector('.game-over').style.display = 'block';
+            playSound('tryagainSound');
+        }
+
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
+        });
+    </script>
+</body>
+</html>

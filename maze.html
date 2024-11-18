@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze do Czarka</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #fdf6e3;
+            font-family: Arial, sans-serif;
+            touch-action: none; /* Prevents default touch behaviors */
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px;
+        }
+
+        #mazeCanvas {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            touch-action: none;
+        }
+
+        #joystick {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            margin: 20px auto;
+            touch-action: none;
+        }
+
+        #stick {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #ffcc00;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .score-display {
+            font-size: 24px;
+            margin: 20px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .game-button {
+            padding: 10px 20px;
+            margin: 10px;
+            background: #ffcc00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .game-button:hover {
+            background: #ffd633;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="score-display">Zebrane serduszka: <span id="score">0</span></div>
+        <canvas id="mazeCanvas"></canvas>
+        <div id="joystick">
+            <div id="stick"></div>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <h2>Brawo!</h2>
+        <p>Znalazłaś drogę do Czarka! 💕</p>
+        <p>Ten twój chłopak to chyba naprawdę Cię uwielbia... 🥰"</p>
+        <p>Zebrane serduszka: <span id="finalScore">0</span></p>
+        <button class="game-button" onclick="restartGame()">Zagraj jeszcze raz</button>
+        <button class="game-button" onclick="window.location.href='index.html'">Wróć do strony głównej</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+        const CELL_SIZE = 30;
+        const PLAYER_SIZE = 28;
+        const ROWS = 15;
+        const COLS = 15;
+        let maze = [];
+        let player = { x: 1, y: 1 };
+        let target = { x: COLS - 2, y: ROWS - 2 };
+        let hearts = [];
+        let score = 0;
+        let playerImg = new Image();
+        let targetImg = new Image();
+        let imagesLoaded = 0;
+        let currentMovement = null;
+        const bounceSound = new Audio('sounds/bounce.mp3');
+
+        // Add error handling and load confirmation
+        playerImg.onload = function() {
+            console.log('Player image loaded successfully');
+            imagesLoaded++;
+            if (imagesLoaded === 2) initGame();
+        };
+
+        playerImg.onerror = function() {
+            console.error('Error loading player image from:', playerImg.src);
+            // Fallback to emoji if image fails to load
+            playerImg = null;
+        };
+
+        targetImg.onload = function() {
+            console.log('Target image loaded successfully');
+            imagesLoaded++;
+            if (imagesLoaded === 2) initGame();
+        };
+
+        targetImg.onerror = function() {
+            console.error('Error loading target image from:', targetImg.src);
+            // Fallback to emoji if image fails to load
+            targetImg = null;
+        };
+
+        // Set image sources
+        playerImg.src = 'images/player.png';
+        targetImg.src = 'images/czarek.png';
+
+        // Set canvas size
+        canvas.width = COLS * CELL_SIZE;
+        canvas.height = ROWS * CELL_SIZE;
+
+        // Generate maze using recursive backtracking
+        function generateMaze() {
+            // Initialize maze with walls
+            for (let y = 0; y < ROWS; y++) {
+                maze[y] = [];
+                for (let x = 0; x < COLS; x++) {
+                    maze[y][x] = 1; // 1 represents wall
+                }
+            }
+
+            function carve(x, y) {
+                maze[y][x] = 0; // 0 represents path
+
+                // Random direction order
+                let directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+                directions.sort(() => Math.random() - 0.5);
+
+                for (let [dx, dy] of directions) {
+                    let newX = x + dx;
+                    let newY = y + dy;
+
+                    if (newX > 0 && newX < COLS - 1 && newY > 0 && newY < ROWS - 1 && maze[newY][newX] === 1) {
+                        maze[y + dy/2][x + dx/2] = 0;
+                        carve(newX, newY);
+                    }
+                }
+            }
+
+            carve(1, 1);
+            maze[target.y][target.x] = 0; // Ensure target is reachable
+            generateHearts();
+        }
+
+        function generateHearts() {
+            hearts = [];
+            // Add some hearts in random empty spaces
+            for (let i = 0; i < 5; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * (COLS - 2)) + 1;
+                    y = Math.floor(Math.random() * (ROWS - 2)) + 1;
+                } while (maze[y][x] === 1 || (x === player.x && y === player.y) || (x === target.x && y === target.y));
+                hearts.push({ x, y });
+            }
+        }
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw maze
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (maze[y][x] === 1) {
+                        ctx.fillStyle = '#2196F3';
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // Draw hearts using emoji
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            hearts.forEach(heart => {
+                const x = heart.x * CELL_SIZE + CELL_SIZE / 2;
+                const y = heart.y * CELL_SIZE + CELL_SIZE / 2;
+                ctx.fillText('❤️', x, y);
+            });
+
+            // Draw target (Czarek)
+            const targetX = target.x * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
+            const targetY = target.y * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
+            if (targetImg && targetImg.complete) {
+                ctx.drawImage(targetImg, targetX, targetY, PLAYER_SIZE, PLAYER_SIZE);
+            } else {
+                // Fallback emoji for target
+                ctx.fillText('😊', targetX + PLAYER_SIZE/2, targetY + PLAYER_SIZE/2);
+            }
+
+            // Draw player
+            const playerX = player.x * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
+            const playerY = player.y * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE) / 2;
+            if (playerImg && playerImg.complete) {
+                ctx.drawImage(playerImg, playerX, playerY, PLAYER_SIZE, PLAYER_SIZE);
+            } else {
+                // Fallback emoji for player
+                ctx.fillText('🚶', playerX + PLAYER_SIZE/2, playerY + PLAYER_SIZE/2);
+            }
+        }
+
+        // Add this function to check for hearts
+        function checkHearts() {
+            for (let i = hearts.length - 1; i >= 0; i--) {
+                if (hearts[i].x === player.x && hearts[i].y === player.y) {
+                    hearts.splice(i, 1);
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    // Play bounce sound
+                    bounceSound.currentTime = 0; // Reset sound to start
+                    bounceSound.play().catch(e => console.log("Sound play failed:", e));
+                }
+            }
+        }
+
+        // Update the movement handling
+        function movePlayer(dx, dy) {
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+            
+            if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
+                player.x = newX;
+                player.y = newY;
+                
+                // Check if player reached target
+                if (player.x === target.x && player.y === target.y) {
+                    // Show win message
+                    document.getElementById('gameOver').style.display = 'block';
+                    document.getElementById('finalScore').textContent = score;
+                    clearInterval(moveInterval);
+                    moveInterval = null;
+                    
+                    // Notify parent window and redirect from there
+                    setTimeout(() => {
+                        window.parent.postMessage('mazeCompleted', '*');
+                    }, 3000); // 3 seconds delay
+                }
+                
+                // Check for hearts
+                checkHearts();
+                drawMaze();
+            }
+        }
+
+        // Update the joystick handling
+        const stick = document.getElementById('stick');
+        const joystick = document.getElementById('joystick');
+        let isDragging = false;
+        let moveInterval = null;
+        const joystickBounds = joystick.getBoundingClientRect();
+        const maxDistance = (joystickBounds.width - stick.offsetWidth) / 2;
+
+        function handleMove(clientX, clientY) {
+            const bounds = joystick.getBoundingClientRect();
+            const centerX = bounds.left + bounds.width / 2;
+            const centerY = bounds.top + bounds.height / 2;
+            
+            let dx = clientX - centerX;
+            let dy = clientY - centerY;
+            
+            // Calculate distance from center
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+            
+            // Limit stick to max distance
+            const clampedDistance = Math.min(distance, maxDistance);
+            
+            // Update stick position
+            const stickX = Math.cos(angle) * clampedDistance;
+            const stickY = Math.sin(angle) * clampedDistance;
+            
+            stick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+            
+            // Store current movement direction
+            if (distance > maxDistance * 0.5) { // Add a dead zone
+                const moveX = Math.round(Math.cos(angle));
+                const moveY = Math.round(Math.sin(angle));
+                
+                // Update current movement direction
+                currentMovement = { dx: moveX, dy: moveY };
+                
+                // Start movement if not already started
+                if (!moveInterval) {
+                    moveInterval = setInterval(updatePlayerPosition, 200);
+                }
+            } else {
+                // Stop movement if in dead zone
+                currentMovement = null;
+                if (moveInterval) {
+                    clearInterval(moveInterval);
+                    moveInterval = null;
+                }
+            }
+        }
+
+        function updatePlayerPosition() {
+            if (currentMovement) {
+                movePlayer(currentMovement.dx, currentMovement.dy);
+            }
+        }
+
+        function stopMovement() {
+            isDragging = false;
+            currentMovement = null;
+            stick.style.transform = 'translate(-50%, -50%)';
+            if (moveInterval) {
+                clearInterval(moveInterval);
+                moveInterval = null;
+            }
+        }
+
+        // Touch event handlers
+        joystick.addEventListener('touchstart', e => {
+            e.preventDefault();
+            isDragging = true;
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        joystick.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (isDragging) {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        joystick.addEventListener('touchend', stopMovement);
+
+        // Mouse event handlers (for desktop testing)
+        joystick.addEventListener('mousedown', e => {
+            isDragging = true;
+            handleMove(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (isDragging) {
+                handleMove(e.clientX, e.clientY);
+            }
+        });
+
+        document.addEventListener('mouseup', stopMovement);
+
+        function initGame() {
+            generateMaze();
+            drawMaze();
+        }
+
+        function gameOver() {
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('finalScore').textContent = score;
+            clearInterval(moveInterval);
+            moveInterval = null;
+            
+            // Add delay before redirect
+            setTimeout(() => {
+                window.location.href = 'index.html#countdownSection';
+            }, 3000); // 3 seconds delay to show the game over screen
+        }
+
+        function restartGame() {
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('gameOver').style.display = 'none';
+            player = { x: 1, y: 1 };
+            generateMaze();
+            drawMaze();
+        }
+    </script>
+</body>
+</html> 

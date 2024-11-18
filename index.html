@@ -322,123 +322,53 @@
             }
         }
 
-        #flappyGame {
-            position: relative;
-            width: 400px;
-            height: 600px;
+        #mainGame {
+            width: 100%;
+            max-width: 600px;
             margin: 20px auto;
-            overflow: hidden;
-            background: #70c5ce;
-            border-radius: 10px;
-            display: none;
-        }
-
-        .bird {
-            position: absolute;
-            width: 40px;
-            height: 30px;
-            background: url('images/bird.png') no-repeat center center;
-            background-size: contain;
-            transition: transform 0.1s;
-        }
-
-        .pipe {
-            position: absolute;
-            width: 60px;
-            background: #2ecc71;
-        }
-
-        .score-display {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 40px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            z-index: 10;
-        }
-
-        .game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 10px;
             text-align: center;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
 
-        .high-score-display {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            z-index: 10;
+        #mainGame h2 {
+            color: #333;
+            margin-bottom: 20px;
         }
 
-        .game-over button {
-            margin: 10px;
-            padding: 10px 20px;
-            background: #ffcc00;
-            border: none;
-            border-radius: 5px;
+        #mainGame iframe {
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .game-button, 
+        button,
+        .previous-games a {
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-        }
-
-        .game-over button:hover {
-            background: #ffd633;
-        }
-
-        .game-over button {
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
         }
 
-        #surpriseBox, #surpriseContent button {
-            -webkit-tap-highlight-color: transparent;
+        /* Prevent double-tap zoom on iOS */
+        * {
             touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-
-        #surpriseBox:hover, #surpriseContent button:hover {
-            background-color: #ffd633;
         }
     </style>
 </head>
 <body>
-    <div id="gameIntro" style="text-align: center; margin: 20px;">
-        <h2>Zagraj w Niunia Bird!</h2>
-        <p>Kliknij spację lub dotknij ekranu, aby zacząć grę.</p>
-        <button onclick="startFlappyBird()" class="game-button">Start!</button>
-    </div>
-
-    <div id="flappyGame">
-        <div class="score-display">0</div>
-        <div class="high-score-display">Best: 0</div>
-        <div class="bird"></div>
-        <div class="game-over">
-            <h2>Koniec gry!</h2>
-            <p>Twój wynik: <span class="final-score">0</span></p>
-            <p>Najlepszy wynik: <span class="best-score">0</span></p>
-            <button class="game-button" ontouchstart="restartGame()" onclick="restartGame()">Zagraj jeszcze raz</button>
-            <button class="game-button" ontouchstart="proceedToCountdown()" onclick="proceedToCountdown()">Przejdź dalej</button>
-        </div>
+    <div id="mainGame">
+        <h2>Znajdź drogę do Czarka!</h2>
+        <iframe src="maze.html" 
+                style="width: 100%; 
+                       max-width: 600px; 
+                       height: 800px; 
+                       border: none; 
+                       border-radius: 10px;"
+                scrolling="no"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+        </iframe>
     </div>
 
     <div id="countdownSection" style="display: none;">
@@ -463,6 +393,8 @@
             <a href="whackatesla.html">Whack-a-Tesla</a>
             <a href="wheel.html">Koło Fortuny</a>
             <a href="memory-game.html">Memory Game</a>
+            <a href="maze.html">Maze do Czarka</a>
+            <a href="flappy.html">Flappy Bird</a>
         </div>
     </div>
 
@@ -860,10 +792,7 @@
         }
 
         function showSurprise(e) {
-            // Prevent default behavior if it's a touch event
-            if (e && e.type === 'touchstart') {
-                e.preventDefault();
-            }
+            e.preventDefault(); // Prevent double-tap zoom
             const surpriseBox = document.getElementById('surpriseBox');
             const surpriseContent = document.getElementById('surpriseContent');
             
@@ -872,10 +801,7 @@
         }
 
         function openSpotifySong(e) {
-            // Prevent default behavior if it's a touch event
-            if (e && e.type === 'touchstart') {
-                e.preventDefault();
-            }
+            e.preventDefault(); // Prevent double-tap zoom
             window.open('https://open.spotify.com/track/5FmTAZVK4O1rDBGn0RYd7t?si=WotckdUdRCaZvaLdfaCoXg&context=spotify%3Aalbum%3A2oPA8Q5sam7nqBCxPjxbK7', '_blank');
         }
 
@@ -888,6 +814,19 @@
                 backgroundMusic.pause();
             }
         }
+
+        // Add this to your script section
+        window.addEventListener('message', function(event) {
+            if (event.data === 'mazeCompleted') {
+                // Hide the maze game
+                document.getElementById('mainGame').style.display = 'none';
+                
+                // Show and scroll to countdown section
+                const countdownSection = document.getElementById('countdownSection');
+                countdownSection.style.display = 'block';
+                countdownSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
     </script>
 </body>
 </html>
