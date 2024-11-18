@@ -438,8 +438,18 @@
         <div id="surpriseContent" style="display: none;">
             <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2p0Z3Z6dTdkOHhzajI2bjFqcWt1a3pjZjI0ZHdjMDZpbnFrNTg4cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l4pTdcifPZLpDjL1e/giphy.gif" alt="Surprise GIF">
             <p>Już naprawdę niedługo! 🥺</p>
-            <button ontouchstart="openSpotifySong(event)" onclick="openSpotifySong(event)" 
-                    style="background-color: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background-color 0.3s ease;">
+            <button id="spotifyButton" 
+                    style="background-color: #1DB954; 
+                           color: white; 
+                           border: none; 
+                           padding: 10px 20px; 
+                           border-radius: 20px; 
+                           font-size: 16px; 
+                           cursor: pointer; 
+                           margin-top: 10px; 
+                           transition: background-color 0.3s ease;
+                           -webkit-tap-highlight-color: transparent;
+                           touch-action: manipulation;">
                 Odbierz piosenkę w prezencie 🎵
             </button>
         </div>
@@ -856,10 +866,28 @@
             surpriseContent.style.display = 'block';
         }
 
-        function openSpotifySong(e) {
-            e.preventDefault(); // Prevent double-tap zoom
-            window.open('https://open.spotify.com/track/5FmTAZVK4O1rDBGn0RYd7t?si=WotckdUdRCaZvaLdfaCoXg&context=spotify%3Aalbum%3A2oPA8Q5sam7nqBCxPjxbK7', '_blank');
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const spotifyButton = document.getElementById('spotifyButton');
+            
+            // Add both click and touch handlers
+            spotifyButton.addEventListener('click', openSpotifySong);
+            spotifyButton.addEventListener('touchend', openSpotifySong);
+            
+            function openSpotifySong(e) {
+                e.preventDefault(); // Prevent any default behavior
+                
+                // The Spotify song URL
+                const spotifyUrl = 'https://open.spotify.com/track/0V3wPSX9ygBnCm8psDIegu?si=pqH-zIZcQbCJTXaHoqO3EA';
+                
+                // Try to open in Spotify app first
+                setTimeout(function() {
+                    window.location.href = spotifyUrl.replace('https://open.', 'spotify:');
+                }, 100);
+                
+                // If app doesn't open, open in browser
+                window.open(spotifyUrl, '_blank');
+            }
+        });
 
         // Add a function to control music (optional)
         function toggleBackgroundMusic() {
