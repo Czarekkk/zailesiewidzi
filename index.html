@@ -105,6 +105,16 @@
             z-index: 10;
         }
 
+        #gptComparison {
+            font-style: italic;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 5px;
+            position: relative;
+            z-index: 5;
+        }
+
         #surpriseBox {
             width: 200px;
             height: 200px;
@@ -376,6 +386,8 @@
 
             #mainGame iframe {
                 max-height: calc(100vh - 150px);
+                width: 100vw;
+                margin: 0 -10px;
             }
 
             .skip-button {
