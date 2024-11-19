@@ -434,25 +434,98 @@
         .spotify-button:hover {
             background-color: #1ed760;
         }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .grid-container {
+            display: grid;
+            gap: 2px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            touch-action: none;
+            margin: 0 auto;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            background: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .cell.selected {
+            background: #ffcc00;
+        }
+
+        .cell.found {
+            background: #90EE90;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            justify-content: center;
+        }
+
+        .word {
+            padding: 5px 15px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .word.found {
+            background: #90EE90;
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 600px) {
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .word {
+                font-size: 14px;
+                padding: 4px 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="mainGame">
-        <h2>Znajdź drogę do Czarka!</h2>
-        <iframe src="maze.html" 
-                style="width: 100%; 
-                       max-width: 600px; 
-                       height: 800px; 
-                       border: none; 
-                       border-radius: 10px;"
-                scrolling="no"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-        </iframe>
+        <h2>Niuniożówka! 💕</h2>
+        <div class="game-container">
+            <div class="grid-container" id="grid"></div>
+            <div class="word-list" id="wordList"></div>
+        </div>
     </div>
 
     <button class="skip-button" onclick="skipToCountdown()">
-        Dawaj mi ten timer, nie mogę się doczekać! 🕒
+        Dawaj mi ten timer, nie mogę się doczekać! 
     </button>
 
     <div id="countdownSection" style="display: none;">
@@ -464,16 +537,17 @@
             <p>Dzisiejsza niespodzianka</p>
         </div>
         <div id="surpriseContent" style="display: none;">
-            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBzdWlkYTg0NnBpcjhla2hhM2t6ZW4wZnBpY2E4OGJqeHBkZzY1bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J3CIIP78dYe6Y0TLSE/giphy.gif" alt="Surprise GIF">
+            <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjd5bzZscTEzMmlidThqODE3MDJleWZrbnBtZG11cnc2NXRncWdyYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26xBFT1F9BgskEvTO/giphy.gif" alt="Surprise GIF">
             <p>Już naprawdę niedługo! 🥺</p>
-            <a href="https://open.spotify.com/track/3odrUVQ9tvRpkC9II2oWzx?si=w-KI0B9CRgqbkVvUAauvrA" 
+            <a href="https://open.spotify.com/track/0SpkyS1Q4MD8GaVcP5YjT4?si=jTbrjlyoTb2ECQRBjKmGmQ&context=spotify%3Aartist%3A1QAJqy2dA3ihHBFIHRphZj" 
                target="_blank" 
                class="spotify-button">
-                Odbierz piosenkę w prezencie 🎵
+                Piosenka na dziś 🎵
             </a>
         </div>
         <div class="previous-games">
-            <h3>Zagraj w gry z poprzednich dni:</h3>
+            <h3>Poprzednie gry:</h3>
+            <a href="wordsearch.html" target="gameFrame">Niuniożówka 📝</a>
             <a href="questionnaire.html">Quiz o Czarku</a>
             <a href="whackatesla.html">Whack-a-Tesla</a>
             <a href="wheel.html">Koło Fortuny</a>
@@ -509,458 +583,270 @@
         <source src="sounds/super.mp3" type="audio/mpeg">
     </audio>
 
-    <script>
-        let bird;
-        let pipes = [];
-        let score = 0;
-        let gameActive = false;
-        let gravity = 0.5;
-        let jump = -8;
-        let birdVelocity = 0;
-        let gameLoop;
-        let highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
-        const successSounds = ['brawoSound', 'niezleSound', 'superSound'];
-        const MIN_PIPE_DISTANCE = 200;  // Minimum distance between pipes
-        const MAX_PIPE_DISTANCE = 300;  // Maximum distance between pipes
-        let lastPipePosition = -1;  // Track the position of the last pipe
-        let gptComparisonCache = null;
+    <div class="popup" id="winPopup">
+        <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBzdWlkYTg0NnBpcjhla2hhM2t6ZW4wZnBpY2E4OGJqeHBkZzY1bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/J3CIIP78dYe6Y0TLSE/giphy.gif" alt="Celebration">
+        <p>Gratulacje! Znalazłaś wszystkie słowa! 🎉</p>
+        <button onclick="skipToCountdown()" class="skip-button">Dawaj mi ten timer! 💕</button>
+    </div>
 
-        // Sound functions need to be defined before they're used
-        function playSound(soundId) {
-            const sound = document.getElementById(soundId);
-            if (sound) {
-                sound.currentTime = 0; // Reset sound to start
-                sound.play().catch(error => {
+    <script>
+        const words = [
+            'TESLA',     // Your car
+            'PORSCHE',   // Dream car
+            'JEŻYK',     // Jeżyk
+            'CZAREK',    // Czarek
+            'MIŚ',       // Miś
+            'NIUNIA'     // Niunia
+        ];
+
+        const gridSize = 12;
+        let grid = [];
+        let selectedCells = [];
+        let foundWords = new Set();
+        let isSelecting = false;
+
+        function playRandomSuccessSound() {
+            const sounds = [
+                document.getElementById('brawoSound'),
+                document.getElementById('niezleSound'),
+                document.getElementById('superSound')
+            ];
+            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+            if (randomSound) {
+                randomSound.currentTime = 0; // Reset sound to start
+                randomSound.play().catch(error => {
                     console.log('Sound play failed:', error);
                 });
             }
         }
 
-        function playRandomSuccessSound() {
-            const randomSound = successSounds[Math.floor(Math.random() * successSounds.length)];
-            playSound(randomSound);
-        }
-
-        function startFlappyBird() {
-            document.getElementById('gameIntro').style.display = 'none';
-            document.getElementById('flappyGame').style.display = 'block';
-            initGame();
-        }
-
-        function handleJump(e) {
-            // Prevent default behavior for touch events
-            if (e.type === 'touchstart') {
-                e.preventDefault();
+        function initializeGrid() {
+            // Create empty grid
+            for (let i = 0; i < gridSize; i++) {
+                grid[i] = Array(gridSize).fill('');
             }
-            
-            // Only handle space key for keyboard events
-            if (e.type === 'keydown' && e.code !== 'Space') {
-                return;
-            }
-            
-            if (!gameActive) return;
-            
-            // Apply upward velocity to the bird
-            birdVelocity = jump;
-            
-            // Play bounce sound
-            playSound('bounceSound');
-        }
 
-        function initGame() {
-            bird = document.querySelector('.bird');
-            bird.style.left = '50px';
-            bird.style.top = '250px';
-            score = 0;
-            birdVelocity = 0;
-            gameActive = true;
-            pipes = [];
-            lastPipePosition = -1;  // Reset last pipe position
-            document.querySelector('.score-display').textContent = '0';
-            document.querySelector('.game-over').style.display = 'none';
-            
-            // Clear existing pipes
-            document.querySelectorAll('.pipe').forEach(pipe => pipe.remove());
-            
-            // Start game loop
-            gameLoop = setInterval(updateGame, 20);
-            setTimeout(createPipe, 0);
-            
-            // Event listeners for all control types
-            document.addEventListener('keydown', handleJump);
-            document.addEventListener('touchstart', handleJump);
-            document.addEventListener('mousedown', handleJump);
-            
-            // Remove event listeners when game ends
-            document.addEventListener('touchend', (e) => e.preventDefault());
-            
-            // Update high score display
-            document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
-        }
-
-        function createPipe() {
-            if (!gameActive) return;
-            
-            // Check if we're too close to the last pipe
-            if (lastPipePosition !== -1 && lastPipePosition > 400 - MIN_PIPE_DISTANCE) {
-                setTimeout(createPipe, 100);  // Check again in 100ms
-                return;
-            }
-            
-            const gapHeight = 150;  // Fixed gap height that's comfortable to pass through
-            
-            // Ensure the gap is never too close to the top or bottom
-            const minGapTop = 100;  // Minimum distance from top
-            const maxGapTop = 400;  // Maximum distance from top
-            const gapPosition = Math.random() * (maxGapTop - minGapTop) + minGapTop;
-            
-            const topPipe = document.createElement('div');
-            topPipe.className = 'pipe';
-            topPipe.style.height = gapPosition + 'px';
-            topPipe.style.top = '0';
-            topPipe.style.left = '400px';
-            
-            const bottomPipe = document.createElement('div');
-            bottomPipe.className = 'pipe';
-            bottomPipe.style.height = (600 - gapPosition - gapHeight) + 'px';
-            bottomPipe.style.bottom = '0';
-            bottomPipe.style.left = '400px';
-            
-            document.getElementById('flappyGame').appendChild(topPipe);
-            document.getElementById('flappyGame').appendChild(bottomPipe);
-            
-            pipes.push({ top: topPipe, bottom: bottomPipe, passed: false });
-            lastPipePosition = 400;  // Reset last pipe position
-            
-            // Calculate random delay for next pipe within our min/max bounds
-            const randomDelay = Math.random() * (MAX_PIPE_DISTANCE - MIN_PIPE_DISTANCE) + MIN_PIPE_DISTANCE;
-            
-            // Adjust delay based on score (gets slightly faster as score increases)
-            const speedMultiplier = Math.max(0.7, 1 - (score * 0.02));  // Caps at 30% faster
-            const finalDelay = randomDelay * speedMultiplier;
-            
-            setTimeout(createPipe, finalDelay);
-        }
-
-        function updateGame() {
-            if (!gameActive) return;
-            
-            // Update bird position
-            birdVelocity += gravity;
-            const birdTop = parseFloat(bird.style.top);
-            const newTop = birdTop + birdVelocity;
-            
-            // Keep bird within game bounds
-            if (newTop < 0) {
-                bird.style.top = '0px';
-                birdVelocity = 0;
-            } else if (newTop > 570) {
-                bird.style.top = '570px';
-                endGame();
-            } else {
-                bird.style.top = newTop + 'px';
-            }
-            
-            // Rotate bird based on velocity (diving animation)
-            const rotation = Math.min(Math.max(birdVelocity * 3, -30), 90);
-            bird.style.transform = `rotate(${rotation}deg)`;
-            
-            // Update pipes
-            pipes.forEach((pipe, index) => {
-                const pipeLeft = parseFloat(pipe.top.style.left);
-                // Adjust pipe speed based on score (starts slower, gradually speeds up)
-                const pipeSpeed = Math.min(4, 2 + (score * 0.1));
-                const newLeft = pipeLeft - pipeSpeed;
-                
-                pipe.top.style.left = newLeft + 'px';
-                pipe.bottom.style.left = newLeft + 'px';
-                
-                // Update last pipe position tracking
-                if (index === pipes.length - 1) {
-                    lastPipePosition = newLeft;
-                }
-                
-                // Check collision
-                if (checkCollision(pipe)) {
-                    playSound('upsSound');
-                    endGame();
-                    return;
-                }
-                
-                // Update score
-                if (!pipe.passed && newLeft < 50) {
-                    pipe.passed = true;
-                    score++;
-                    document.querySelector('.score-display').textContent = score;
-                    
-                    // Play success sound only every 5 points
-                    if (score % 5 === 0) {
-                        playRandomSuccessSound();
-                    }
-                    
-                    if (score > highScore) {
-                        highScore = score;
-                        document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
-                    }
-                }
-                
-                // Remove off-screen pipes
-                if (newLeft < -60) {
-                    pipe.top.remove();
-                    pipe.bottom.remove();
-                    pipes.splice(index, 1);
-                }
+            // Place words
+            words.forEach(word => {
+                placeWord(word);
             });
-        }
 
-        function checkCollision(pipe) {
-            const birdRect = bird.getBoundingClientRect();
-            const topPipeRect = pipe.top.getBoundingClientRect();
-            const bottomPipeRect = pipe.bottom.getBoundingClientRect();
-            
-            return (
-                birdRect.right > topPipeRect.left &&
-                birdRect.left < topPipeRect.right && (
-                    birdRect.top < topPipeRect.bottom ||
-                    birdRect.bottom > bottomPipeRect.top
-                )
-            );
-        }
-
-        function endGame() {
-            gameActive = false;
-            clearInterval(gameLoop);
-            
-            // Update high score if necessary
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('flappyHighScore', highScore);
+            // Fill empty cells with Polish alphabet
+            const polishAlphabet = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUWYZŹŻ'.split('');
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (grid[i][j] === '') {
+                        grid[i][j] = polishAlphabet[Math.floor(Math.random() * polishAlphabet.length)];
+                    }
+                }
             }
-            
-            // Update displays
-            document.querySelector('.final-score').textContent = score;
-            document.querySelector('.best-score').textContent = highScore;
-            document.querySelector('.high-score-display').textContent = `Best: ${highScore}`;
-            
-            // Pre-load GPT comparison
-            preloadGPTComparison();
-            
-            // Show game over screen and play sound
-            document.querySelector('.game-over').style.display = 'block';
-            playSound('tryagainSound');
-        }
 
-        async function preloadGPTComparison() {
-            const now = new Date();
-            const targetDate = new Date('2024-11-21T17:28:00+01:00');
-            const diff = targetDate - now;
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
-            
-            try {
-                gptComparisonCache = await getGPTComparison(timeString);
-            } catch (error) {
-                console.error('Error preloading GPT comparison:', error);
+            // Create grid UI
+            const gridContainer = document.getElementById('grid');
+            gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = grid[i][j];
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    gridContainer.appendChild(cell);
+                }
             }
+
+            // Create word list
+            const wordList = document.getElementById('wordList');
+            words.forEach(word => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'word';
+                wordElement.textContent = word;
+                wordElement.id = `word-${word}`;
+                wordList.appendChild(wordElement);
+            });
+
+            // Add event listeners
+            gridContainer.addEventListener('mousedown', startSelection);
+            gridContainer.addEventListener('mouseover', updateSelection);
+            gridContainer.addEventListener('mouseup', endSelection);
+            gridContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gridContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gridContainer.addEventListener('touchend', handleTouchEnd);
         }
 
-        function restartGame(e) {
-            // Prevent default behavior if it's a touch event
-            if (e && e.type === 'touchstart') {
-                e.preventDefault();
-            }
-            initGame();
-        }
+        function placeWord(word) {
+            const directions = [
+                [0, 1],   // horizontal
+                [1, 0],   // vertical
+                [1, 1],   // diagonal down
+                [-1, 1],  // diagonal up
+            ];
 
-        async function getGPTComparison(timeString) {
-            try {
-                // Use the correct path to your API endpoint
-                const response = await fetch('api/gpt', {  // or '/api/gpt' depending on your setup
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ timeString })
-                });
+            let placed = false;
+            while (!placed) {
+                // Prefer horizontal and vertical directions (75% chance)
+                const directionIndex = Math.random() < 0.75 ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * directions.length);
+                const direction = directions[directionIndex];
+                const [dx, dy] = direction;
+                
+                const maxX = gridSize - (dx * word.length);
+                const maxY = gridSize - (dy * word.length);
+                const startX = Math.floor(Math.random() * maxX);
+                const startY = Math.floor(Math.random() * maxY);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                let canPlace = true;
+                for (let i = 0; i < word.length; i++) {
+                    const x = startX + (dx * i);
+                    const y = startY + (dy * i);
+                    if (grid[y][x] !== '' && grid[y][x] !== word[i]) {
+                        canPlace = false;
+                        break;
+                    }
                 }
 
-                const data = await response.json();
-                console.log('GPT Response:', data); // For debugging
-                return data.response;
-            } catch (error) {
-                console.error('Error:', error);
-                // Provide a fallback response if the API call fails
-                return 'To tyle czasu, ile potrzeba na przeczytanie wszystkich książek Harry\'ego Pottera!';
+                if (canPlace) {
+                    for (let i = 0; i < word.length; i++) {
+                        const x = startX + (dx * i);
+                        const y = startY + (dy * i);
+                        grid[y][x] = word[i];
+                    }
+                    placed = true;
+                }
             }
         }
 
-        async function proceedToCountdown(e) {
-            // Prevent default behavior if it's a touch event
-            if (e && e.type === 'touchstart') {
-                e.preventDefault();
+        function startSelection(e) {
+            if (e.target.classList.contains('cell')) {
+                isSelecting = true;
+                selectedCells = [e.target];
+                e.target.classList.add('selected');
             }
+        }
+
+        function updateSelection(e) {
+            if (!isSelecting || !e.target.classList.contains('cell')) return;
+
+            const firstCell = selectedCells[0];
+            const currentCell = e.target;
             
-            document.getElementById('flappyGame').style.display = 'none';
-            document.getElementById('countdownSection').style.display = 'block';
-            
-            // Start playing background music
-            const backgroundMusic = document.getElementById('backgroundMusic');
-            if (backgroundMusic) {
-                backgroundMusic.volume = 0.5; // Set volume to 50%
-                backgroundMusic.play().catch(error => {
-                    console.log('Music play failed:', error);
+            const row1 = parseInt(firstCell.dataset.row);
+            const col1 = parseInt(firstCell.dataset.col);
+            const row2 = parseInt(currentCell.dataset.row);
+            const col2 = parseInt(currentCell.dataset.col);
+
+            if (isValidSelection(row1, col1, row2, col2)) {
+                selectedCells.slice(1).forEach(cell => cell.classList.remove('selected'));
+                selectedCells = [firstCell];
+                highlightCells(row1, col1, row2, col2);
+            }
+        }
+
+        function endSelection() {
+            if (!isSelecting) return;
+            isSelecting = false;
+
+            const word = getSelectedWord();
+            if (words.includes(word) && !foundWords.has(word)) {
+                foundWords.add(word);
+                selectedCells.forEach(cell => {
+                    cell.classList.remove('selected');
+                    cell.classList.add('found');
                 });
-            }
-            
-            // Use the pre-loaded comparison if available
-            if (gptComparisonCache) {
-                localStorage.setItem('gptComparison', gptComparisonCache);
-                document.getElementById('gptComparison').textContent = gptComparisonCache;
+                const wordElement = document.getElementById(`word-${word}`);
+                if (wordElement) {
+                    wordElement.classList.add('found');
+                }
+                
+                playRandomSuccessSound();
+
+                if (foundWords.size === words.length) {
+                    setTimeout(() => {
+                        document.getElementById('winPopup').classList.add('show');
+                    }, 500);
+                }
             } else {
-                // Fallback to loading it now if pre-load failed
-                const now = new Date();
-                const targetDate = new Date('2024-11-21T17:28:00+01:00');
-                const diff = targetDate - now;
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
-                
-                try {
-                    const gptResponse = await getGPTComparison(timeString);
-                    if (gptResponse) {
-                        localStorage.setItem('gptComparison', gptResponse);
-                        document.getElementById('gptComparison').textContent = gptResponse;
-                    }
-                } catch (error) {
-                    console.error('Error getting GPT comparison:', error);
-                    const storedComparison = localStorage.getItem('gptComparison');
-                    if (storedComparison) {
-                        document.getElementById('gptComparison').textContent = storedComparison;
-                    }
+                clearSelection();
+            }
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const cell = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (cell && cell.classList.contains('cell')) {
+                startSelection({ target: cell });
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const cell = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (cell && cell.classList.contains('cell')) {
+                updateSelection({ target: cell });
+            }
+        }
+
+        function handleTouchEnd(e) {
+            endSelection();
+        }
+
+        function isValidSelection(row1, col1, row2, col2) {
+            const rowDiff = Math.abs(row2 - row1);
+            const colDiff = Math.abs(col2 - col1);
+            return row1 === row2 || col1 === col2 || rowDiff === colDiff;
+        }
+
+        function highlightCells(row1, col1, row2, col2) {
+            const rowDiff = row2 - row1;
+            const colDiff = col2 - col1;
+            const steps = Math.max(Math.abs(rowDiff), Math.abs(colDiff));
+            const dRow = rowDiff === 0 ? 0 : rowDiff / steps;
+            const dCol = colDiff === 0 ? 0 : colDiff / steps;
+
+            selectedCells = [];
+
+            for (let i = 0; i <= steps; i++) {
+                const row = row1 + Math.round(dRow * i);
+                const col = col1 + Math.round(dCol * i);
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (cell) {
+                    cell.classList.add('selected');
+                    selectedCells.push(cell);
                 }
             }
-            
-            updateCountdown();
         }
 
-        function updateCountdown() {
-            const now = new Date();
-            const targetDate = new Date('2024-11-21T17:28:00+01:00');
-            const diff = targetDate - now;
-            
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            
-            const timeString = `${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund`;
-            document.getElementById('countdownText').textContent = `Widzimy się już za ${timeString}!`;
-            
-            // Get stored GPT comparison if it exists
-            const storedComparison = localStorage.getItem('gptComparison');
-            if (storedComparison) {
-                document.getElementById('gptComparison').textContent = storedComparison;
-            }
-            
-            setTimeout(updateCountdown, 1000);
+        function clearSelection() {
+            selectedCells.forEach(cell => cell.classList.remove('selected'));
+            selectedCells = [];
         }
 
-        function showSurprise(e) {
-            e.preventDefault(); // Prevent double-tap zoom
-            const surpriseBox = document.getElementById('surpriseBox');
-            const surpriseContent = document.getElementById('surpriseContent');
+        function getSelectedWord() {
+            const forwardWord = selectedCells.map(cell => cell.textContent).join('');
+            const backwardWord = selectedCells.map(cell => cell.textContent).reverse().join('');
             
-            surpriseBox.style.display = 'none';
-            surpriseContent.style.display = 'block';
+            if (words.includes(forwardWord)) return forwardWord;
+            if (words.includes(backwardWord)) return backwardWord;
+            return forwardWord;
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const spotifyButton = document.getElementById('spotifyButton');
-            
-            // Add both click and touch handlers
-            spotifyButton.addEventListener('click', openSpotifySong);
-            spotifyButton.addEventListener('touchend', openSpotifySong);
-            
-            function openSpotifySong(e) {
-                e.preventDefault(); // Prevent any default behavior
-                
-                // The Spotify song URL
-                const spotifyUrl = 'https://open.spotify.com/track/0V3wPSX9ygBnCm8psDIegu?si=pqH-zIZcQbCJTXaHoqO3EA';
-                
-                // Try to open in Spotify app first
-                setTimeout(function() {
-                    window.location.href = spotifyUrl.replace('https://open.', 'spotify:');
-                }, 100);
-                
-                // If app doesn't open, open in browser
-                window.open(spotifyUrl, '_blank');
-            }
-        });
-
-        // Add a function to control music (optional)
-        function toggleBackgroundMusic() {
-            const backgroundMusic = document.getElementById('backgroundMusic');
-            if (backgroundMusic.paused) {
-                backgroundMusic.play();
-            } else {
-                backgroundMusic.pause();
-            }
-        }
-
-        // Add this to your script section
-        window.addEventListener('message', function(event) {
-            if (event.data === 'mazeCompleted') {
-                // Hide the maze game and skip button
-                document.getElementById('mainGame').style.display = 'none';
-                document.querySelector('.skip-button').style.display = 'none';
-                
-                // Show countdown section
-                const countdownSection = document.getElementById('countdownSection');
-                countdownSection.style.display = 'block';
-                countdownSection.scrollIntoView({ behavior: 'smooth' });
-
-                // Start playing background music
-                const backgroundMusic = document.getElementById('backgroundMusic');
-                if (backgroundMusic) {
-                    backgroundMusic.volume = 0.5; // Set volume to 50%
-                    backgroundMusic.play().catch(error => {
-                        console.log('Music play failed:', error);
-                    });
-                }
-
-                // Initialize countdown and GPT comparison
-                updateCountdown();
-                preloadGPTComparison().then(() => {
-                    if (gptComparisonCache) {
-                        localStorage.setItem('gptComparison', gptComparisonCache);
-                        document.getElementById('gptComparison').textContent = gptComparisonCache;
-                    }
-                });
-            }
-        });
 
         function skipToCountdown() {
-            // Hide the maze game and skip button
+            // Hide popup if it's showing
+            const popup = document.getElementById('winPopup');
+            if (popup) {
+                popup.classList.remove('show');
+            }
+
+            // Hide game elements
             document.getElementById('mainGame').style.display = 'none';
             document.querySelector('.skip-button').style.display = 'none';
             
             // Show countdown section
-            const countdownSection = document.getElementById('countdownSection');
-            countdownSection.style.display = 'block';
-            countdownSection.scrollIntoView({ behavior: 'smooth' });
-
-            // Start playing background music
+            document.getElementById('countdownSection').style.display = 'block';
+            
+            // Play background music
             const backgroundMusic = document.getElementById('backgroundMusic');
             if (backgroundMusic) {
                 backgroundMusic.volume = 0.5;
@@ -969,7 +855,7 @@
                 });
             }
 
-            // Initialize countdown and GPT comparison
+            // Update countdown and GPT comparison
             updateCountdown();
             preloadGPTComparison().then(() => {
                 if (gptComparisonCache) {
@@ -978,6 +864,48 @@
                 }
             });
         }
+
+        function showSurprise(event) {
+            event.preventDefault();
+            const surpriseBox = document.getElementById('surpriseBox');
+            const surpriseContent = document.getElementById('surpriseContent');
+            
+            if (surpriseContent.style.display === 'none') {
+                surpriseContent.style.display = 'block';
+                surpriseBox.style.backgroundColor = '#ffd633';
+            } else {
+                surpriseContent.style.display = 'none';
+                surpriseBox.style.backgroundColor = '#ffcc00';
+            }
+        }
+
+        function updateCountdown() {
+            // Set target date to November 21, 2024, 17:28 Warsaw time
+            const targetDate = new Date('2024-11-21T17:28:00+01:00');
+            const now = new Date();
+            const difference = targetDate - now;
+
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+            let countdownText = '';
+            if (difference > 0) {
+                countdownText = `Widzimy się już za ${days} dni, ${hours} godzin, ${minutes} minut i ${seconds} sekund! 💕`;
+            } else {
+                countdownText = 'Widzimy się już dziś! 💕';
+            }
+
+            document.getElementById('countdownText').textContent = countdownText;
+        }
+
+        // Update countdown immediately and then every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Initialize game
+        initializeGrid();
     </script>
 </body>
 </html>
