@@ -106,6 +106,57 @@
                font-size: 1.2rem;
                font-weight: 600;
            }
+
+           .progress-container {
+               display: none;
+               position: relative;
+               width: 80%;
+               max-width: 600px;
+               height: 4px;
+               background: rgba(255, 255, 255, 0.1);
+               border-radius: 10px;
+               margin: 2rem auto;
+               overflow: visible;
+           }
+
+           .progress-bar {
+               position: absolute;
+               height: 100%;
+               background: linear-gradient(90deg, #ff9ecd, #ff758c);
+               border-radius: 10px;
+               transition: width 1s linear;
+           }
+
+           .train-emoji {
+               position: absolute;
+               top: -15px;
+               right: -15px;
+               font-size: 24px;
+               transform: scaleX(-1);
+               filter: drop-shadow(0 0 10px rgba(255, 158, 205, 0.5));
+           }
+
+           .station {
+               position: absolute;
+               top: 15px;
+               font-size: 0.9rem;
+               color: rgba(255, 255, 255, 0.8);
+           }
+
+           .start-station {
+               left: 0;
+           }
+
+           .end-station {
+               right: 0;
+           }
+
+           .journey-time {
+               text-align: center;
+               font-size: 1rem;
+               color: rgba(255, 255, 255, 0.8);
+               margin-top: 2.5rem;
+           }
        </style>
    </head>
    <body>
@@ -114,6 +165,15 @@
 
        <div id="countdown">
            Widzimy się już za: <span id="timer">...</span>
+       </div>
+
+       <div id="progressContainer" class="progress-container">
+           <div class="progress-bar">
+               <span class="train-emoji">🚂</span>
+           </div>
+           <span class="station start-station">Szczecin</span>
+           <span class="station end-station">Katowice</span>
+           <div class="journey-time" id="journeyTime"></div>
        </div>
 
        <a href="https://open.spotify.com/track/1Y3LN4zO1Edc2EluIoSPJN" target="_blank" class="audio-controls">
@@ -163,6 +223,41 @@
 
            updateCountdown();
            setInterval(updateCountdown, 1000);
+
+           // Train journey progress
+           function updateTrainProgress() {
+               const journeyStart = new Date('2024-12-05T08:59:00+01:00');
+               const journeyEnd = new Date('2024-12-05T15:45:00+01:00');
+               const now = new Date();
+               
+               const progressContainer = document.getElementById('progressContainer');
+               const progressBar = progressContainer.querySelector('.progress-bar');
+               const journeyTimeElement = document.getElementById('journeyTime');
+
+               // Only show progress during the journey
+               if (now >= journeyStart && now <= journeyEnd) {
+                   progressContainer.style.display = 'block';
+                   
+                   const totalJourneyTime = journeyEnd - journeyStart;
+                   const currentProgress = now - journeyStart;
+                   const progressPercentage = Math.min((currentProgress / totalJourneyTime) * 100, 100);
+                   
+                   progressBar.style.width = progressPercentage + '%';
+
+                   // Calculate remaining time
+                   const remainingTime = journeyEnd - now;
+                   const remainingHours = Math.floor(remainingTime / (1000 * 60 * 60));
+                   const remainingMinutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                   
+                   journeyTimeElement.textContent = `Do przyjazdu pozostało: ${remainingHours}h ${remainingMinutes}min`;
+               } else {
+                   progressContainer.style.display = 'none';
+               }
+           }
+
+           // Update progress every second
+           setInterval(updateTrainProgress, 1000);
+           updateTrainProgress(); // Initial call
        </script>
    </body>
    </html>
