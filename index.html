@@ -92,52 +92,19 @@
                z-index: 2;
                border: 1px solid rgba(255, 255, 255, 0.1);
                transition: all 0.3s ease;
+               text-decoration: none;
            }
 
            .audio-controls:hover {
                transform: translateY(-5px);
                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-           }
-
-           .audio-controls button {
                background: rgba(255, 158, 205, 0.3);
-               border: none;
-               padding: 0.8rem 1.5rem;
-               border-radius: 10px;
+           }
+
+           .surprise-text {
                color: white;
-               cursor: pointer;
-               transition: all 0.3s ease;
-               font-family: 'Montserrat', sans-serif;
+               font-size: 1.2rem;
                font-weight: 600;
-               min-width: 150px;
-           }
-
-           .audio-controls button:hover {
-               background: rgba(255, 158, 205, 0.5);
-               transform: scale(1.05);
-           }
-
-           #volumeControl {
-               width: 150px;
-               height: 5px;
-               -webkit-appearance: none;
-               background: rgba(255, 255, 255, 0.2);
-               border-radius: 5px;
-               outline: none;
-           }
-
-           #volumeControl::-webkit-slider-thumb {
-               -webkit-appearance: none;
-               width: 15px;
-               height: 15px;
-               background: #ff9ecd;
-               border-radius: 50%;
-               cursor: pointer;
-               transition: all 0.3s ease;
-           }
-
-           #volumeControl::-webkit-slider-thumb:hover {
-               transform: scale(1.2);
            }
        </style>
    </head>
@@ -149,16 +116,9 @@
            Widzimy się już za: <span id="timer">...</span>
        </div>
 
-       <div class="audio-controls">
-           <audio id="bgMusic" loop>
-               <source src="until-i-found-you.mp3" type="audio/mp3">
-               Twoja przeglądarka nie wspiera elementu audio.
-           </audio>
-           <div>
-               <button onclick="toggleMusic()" id="musicToggle">▶️ Play Music</button>
-               <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
-           </div>
-       </div>
+       <a href="https://open.spotify.com/track/1Y3LN4zO1Edc2EluIoSPJN" target="_blank" class="audio-controls">
+           <span class="surprise-text">💝 Odbierz niespodziankę 💝</span>
+       </a>
 
        <script>
            // Countdown logic
@@ -178,35 +138,6 @@
 
                document.getElementById('timer').textContent = countdownText;
            }
-
-           // Music control
-           const audio = document.getElementById('bgMusic');
-           const musicToggle = document.getElementById('musicToggle');
-           const volumeControl = document.getElementById('volumeControl');
-
-           function toggleMusic() {
-               if (audio.paused) {
-                   audio.play();
-                   musicToggle.textContent = '⏸️ Pause Music';
-               } else {
-                   audio.pause();
-                   musicToggle.textContent = '▶️ Play Music';
-               }
-           }
-
-           volumeControl.addEventListener('input', (e) => {
-               audio.volume = e.target.value;
-           });
-
-           // Auto-play setup with user interaction requirement
-           document.body.addEventListener('click', function() {
-               if (audio.paused) {
-                   audio.play().catch(function(error) {
-                       console.log("Audio play failed:", error);
-                   });
-                   musicToggle.textContent = '⏸️ Pause Music';
-               }
-           }, { once: true });
 
            // Create floating hearts
            const heartEmojis = ['❤️', '💖', '💝', '💕', '💗', '💓', '💘'];
