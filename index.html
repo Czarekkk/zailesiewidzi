@@ -1,0 +1,56 @@
+   <!DOCTYPE html>
+   <html lang="pl">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Za Ile Się Widzimy?</title>
+       <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+       <style>
+           body {
+               background: linear-gradient(135deg, #1a202c, #2d3748);
+               color: #edf2f7;
+               display: flex;
+               justify-content: center;
+               align-items: center;
+               height: 100vh;
+               margin: 0;
+               font-family: 'Arial', sans-serif;
+           }
+           #countdown {
+               font-size: 2rem;
+               text-align: center;
+               padding: 20px;
+               background: rgba(255, 255, 255, 0.1);
+               border-radius: 10px;
+               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+           }
+       </style>
+   </head>
+   <body>
+       <div id="countdown">
+           Widzimy się już za: <span id="timer">...</span>
+       </div>
+
+       <script>
+           function updateCountdown() {
+               const targetDate = new Date('2024-12-05T15:45:00+01:00');
+               const now = new Date();
+               const difference = targetDate - now;
+
+               const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+               const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+               const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+               const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+               const countdownText = difference > 0
+                   ? `${days} dni ${hours} godzin ${minutes} minut ${seconds} sekund`
+                   : 'Widzimy się już dziś!';
+
+               document.getElementById('timer').textContent = countdownText;
+           }
+
+           updateCountdown();
+           setInterval(updateCountdown, 1000);
+       </script>
+   </body>
+   </html>
