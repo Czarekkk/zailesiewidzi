@@ -10,6 +10,7 @@
                background: linear-gradient(135deg, #1a202c, #2d3748);
                color: #edf2f7;
                display: flex;
+               flex-direction: column;
                justify-content: center;
                align-items: center;
                height: 100vh;
@@ -23,12 +24,51 @@
                background: rgba(255, 255, 255, 0.1);
                border-radius: 10px;
                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+               margin-bottom: 20px;
+           }
+           .audio-controls {
+               position: fixed;
+               bottom: 20px;
+               background: rgba(255, 255, 255, 0.1);
+               padding: 10px;
+               border-radius: 10px;
+               display: flex;
+               flex-direction: column;
+               align-items: center;
+               gap: 10px;
+           }
+           .audio-controls button {
+               background: rgba(255, 255, 255, 0.2);
+               border: none;
+               padding: 8px 16px;
+               border-radius: 5px;
+               color: white;
+               cursor: pointer;
+               transition: background 0.3s ease;
+           }
+           .audio-controls button:hover {
+               background: rgba(255, 255, 255, 0.3);
+           }
+           #volumeControl {
+               width: 100px;
+               margin: 0 10px;
            }
        </style>
    </head>
    <body>
        <div id="countdown">
            Widzimy się już za: <span id="timer">...</span>
+       </div>
+
+       <div class="audio-controls">
+           <audio id="bgMusic" loop>
+               <source src="background-music.mp3" type="audio/mp3">
+               Twoja przeglądarka nie wspiera elementu audio.
+           </audio>
+           <div>
+               <button onclick="toggleMusic()" id="musicToggle">▶️ Play Music</button>
+               <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+           </div>
        </div>
 
        <script>
@@ -51,6 +91,35 @@
 
            updateCountdown();
            setInterval(updateCountdown, 1000);
+
+           // Music control
+           const audio = document.getElementById('bgMusic');
+           const musicToggle = document.getElementById('musicToggle');
+           const volumeControl = document.getElementById('volumeControl');
+
+           function toggleMusic() {
+               if (audio.paused) {
+                   audio.play();
+                   musicToggle.textContent = '⏸️ Pause Music';
+               } else {
+                   audio.pause();
+                   musicToggle.textContent = '▶️ Play Music';
+               }
+           }
+
+           volumeControl.addEventListener('input', (e) => {
+               audio.volume = e.target.value;
+           });
+
+           // Auto-play setup with user interaction requirement
+           document.body.addEventListener('click', function() {
+               if (audio.paused) {
+                   audio.play().catch(function(error) {
+                       console.log("Audio play failed:", error);
+                   });
+                   musicToggle.textContent = '⏸️ Pause Music';
+               }
+           }, { once: true });
        </script>
    </body>
    </html>
