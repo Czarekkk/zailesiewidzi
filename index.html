@@ -32,31 +32,10 @@
 
            .heart {
                position: absolute;
-               width: 20px;
-               height: 20px;
-               background: rgba(255, 182, 193, 0.2);
+               font-size: 24px;
                animation: float 20s linear infinite;
                bottom: -100px;
-           }
-
-           .heart:before,
-           .heart:after {
-               content: '';
-               position: absolute;
-               width: 20px;
-               height: 32px;
-               border-radius: 32px 32px 0 0;
-               background: inherit;
-           }
-
-           .heart:before {
-               transform: rotate(-45deg);
-               transform-origin: 100% 100%;
-           }
-
-           .heart:after {
-               transform: rotate(45deg);
-               transform-origin: 0 100%;
+               user-select: none;
            }
 
            @keyframes float {
@@ -230,12 +209,15 @@
            }, { once: true });
 
            // Create floating hearts
+           const heartEmojis = ['❤️', '💖', '💝', '💕', '💗', '💓', '💘'];
+
            function createHeart() {
                const heart = document.createElement('div');
                heart.className = 'heart';
+               heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
                heart.style.left = Math.random() * 100 + 'vw';
                heart.style.animationDuration = (Math.random() * 15 + 5) + 's';
-               heart.style.opacity = Math.random() * 0.5 + 0.3;
+               heart.style.opacity = Math.random() * 0.5 + 0.5;
                heart.style.transform = `scale(${Math.random() * 0.5 + 0.5})`;
                document.getElementById('hearts').appendChild(heart);
 
