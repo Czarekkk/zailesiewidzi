@@ -5,64 +5,174 @@
        <meta name="viewport" content="width=device-width, initial-scale=1.0">
        <title>Za Ile Się Widzimy?</title>
        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
        <style>
            body {
-               background: linear-gradient(135deg, #1a202c, #2d3748);
-               color: #edf2f7;
+               background: linear-gradient(135deg, #2c1338, #4a1942);
+               color: #fff;
                display: flex;
                flex-direction: column;
                justify-content: center;
                align-items: center;
                height: 100vh;
                margin: 0;
-               font-family: 'Arial', sans-serif;
+               font-family: 'Montserrat', sans-serif;
+               position: relative;
+               overflow: hidden;
            }
+
+           /* Floating hearts background */
+           .hearts {
+               position: absolute;
+               width: 100%;
+               height: 100%;
+               pointer-events: none;
+               z-index: 0;
+           }
+
+           .heart {
+               position: absolute;
+               width: 20px;
+               height: 20px;
+               background: rgba(255, 182, 193, 0.2);
+               animation: float 20s linear infinite;
+               bottom: -100px;
+           }
+
+           .heart:before,
+           .heart:after {
+               content: '';
+               position: absolute;
+               width: 20px;
+               height: 32px;
+               border-radius: 32px 32px 0 0;
+               background: inherit;
+           }
+
+           .heart:before {
+               transform: rotate(-45deg);
+               transform-origin: 100% 100%;
+           }
+
+           .heart:after {
+               transform: rotate(45deg);
+               transform-origin: 0 100%;
+           }
+
+           @keyframes float {
+               0% {
+                   transform: translateY(0) scale(1) rotate(0deg);
+                   opacity: 1;
+               }
+               100% {
+                   transform: translateY(-1000px) scale(1.5) rotate(360deg);
+                   opacity: 0;
+               }
+           }
+
            #countdown {
-               font-size: 2rem;
+               font-size: 2.5rem;
                text-align: center;
-               padding: 20px;
+               padding: 2rem;
                background: rgba(255, 255, 255, 0.1);
-               border-radius: 10px;
-               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-               margin-bottom: 20px;
+               backdrop-filter: blur(10px);
+               border-radius: 20px;
+               box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+               margin-bottom: 2rem;
+               z-index: 1;
+               border: 1px solid rgba(255, 255, 255, 0.1);
+               animation: pulse 2s infinite;
            }
+
+           @keyframes pulse {
+               0% { transform: scale(1); }
+               50% { transform: scale(1.02); }
+               100% { transform: scale(1); }
+           }
+
+           #timer {
+               display: block;
+               margin-top: 1rem;
+               font-family: 'Dancing Script', cursive;
+               font-size: 3.5rem;
+               color: #ff9ecd;
+               text-shadow: 0 0 10px rgba(255, 158, 205, 0.5);
+           }
+
            .audio-controls {
                position: fixed;
-               bottom: 20px;
+               bottom: 2rem;
                background: rgba(255, 255, 255, 0.1);
-               padding: 10px;
-               border-radius: 10px;
+               backdrop-filter: blur(10px);
+               padding: 1rem 2rem;
+               border-radius: 15px;
                display: flex;
                flex-direction: column;
                align-items: center;
-               gap: 10px;
+               gap: 1rem;
+               z-index: 2;
+               border: 1px solid rgba(255, 255, 255, 0.1);
+               transition: all 0.3s ease;
            }
+
+           .audio-controls:hover {
+               transform: translateY(-5px);
+               box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+           }
+
            .audio-controls button {
-               background: rgba(255, 255, 255, 0.2);
+               background: rgba(255, 158, 205, 0.3);
                border: none;
-               padding: 8px 16px;
-               border-radius: 5px;
+               padding: 0.8rem 1.5rem;
+               border-radius: 10px;
                color: white;
                cursor: pointer;
-               transition: background 0.3s ease;
+               transition: all 0.3s ease;
+               font-family: 'Montserrat', sans-serif;
+               font-weight: 600;
+               min-width: 150px;
            }
+
            .audio-controls button:hover {
-               background: rgba(255, 255, 255, 0.3);
+               background: rgba(255, 158, 205, 0.5);
+               transform: scale(1.05);
            }
+
            #volumeControl {
-               width: 100px;
-               margin: 0 10px;
+               width: 150px;
+               height: 5px;
+               -webkit-appearance: none;
+               background: rgba(255, 255, 255, 0.2);
+               border-radius: 5px;
+               outline: none;
+           }
+
+           #volumeControl::-webkit-slider-thumb {
+               -webkit-appearance: none;
+               width: 15px;
+               height: 15px;
+               background: #ff9ecd;
+               border-radius: 50%;
+               cursor: pointer;
+               transition: all 0.3s ease;
+           }
+
+           #volumeControl::-webkit-slider-thumb:hover {
+               transform: scale(1.2);
            }
        </style>
    </head>
    <body>
+       <!-- Hearts background -->
+       <div class="hearts" id="hearts"></div>
+
        <div id="countdown">
            Widzimy się już za: <span id="timer">...</span>
        </div>
 
        <div class="audio-controls">
            <audio id="bgMusic" loop>
-               <source src="background-music.mp3" type="audio/mp3">
+               <source src="until-i-found-you.mp3" type="audio/mp3">
                Twoja przeglądarka nie wspiera elementu audio.
            </audio>
            <div>
@@ -72,6 +182,7 @@
        </div>
 
        <script>
+           // Countdown logic
            function updateCountdown() {
                const targetDate = new Date('2024-12-05T15:45:00+01:00');
                const now = new Date();
@@ -88,9 +199,6 @@
 
                document.getElementById('timer').textContent = countdownText;
            }
-
-           updateCountdown();
-           setInterval(updateCountdown, 1000);
 
            // Music control
            const audio = document.getElementById('bgMusic');
@@ -120,6 +228,29 @@
                    musicToggle.textContent = '⏸️ Pause Music';
                }
            }, { once: true });
+
+           // Create floating hearts
+           function createHeart() {
+               const heart = document.createElement('div');
+               heart.className = 'heart';
+               heart.style.left = Math.random() * 100 + 'vw';
+               heart.style.animationDuration = (Math.random() * 15 + 5) + 's';
+               heart.style.opacity = Math.random() * 0.5 + 0.3;
+               heart.style.transform = `scale(${Math.random() * 0.5 + 0.5})`;
+               document.getElementById('hearts').appendChild(heart);
+
+               // Remove heart after animation
+               setTimeout(() => {
+                   heart.remove();
+               }, 20000);
+           }
+
+           // Create hearts periodically
+           setInterval(createHeart, 300);
+
+           updateCountdown();
+           setInterval(updateCountdown, 1000);
        </script>
    </body>
    </html>
+   
