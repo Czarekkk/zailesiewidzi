@@ -50,7 +50,7 @@
            }
 
            #countdown {
-               font-size: 2.5rem;
+               font-size: 3.5rem;
                text-align: center;
                padding: 2rem;
                background: rgba(255, 255, 255, 0.1);
@@ -61,6 +61,9 @@
                z-index: 1;
                border: 1px solid rgba(255, 255, 255, 0.1);
                animation: pulse 2s infinite;
+               font-family: 'Dancing Script', cursive;
+               color: #ff9ecd;
+               text-shadow: 0 0 10px rgba(255, 158, 205, 0.5);
            }
 
            @keyframes pulse {
@@ -70,12 +73,7 @@
            }
 
            #timer {
-               display: block;
-               margin-top: 1rem;
-               font-family: 'Dancing Script', cursive;
-               font-size: 3.5rem;
-               color: #ff9ecd;
-               text-shadow: 0 0 10px rgba(255, 158, 205, 0.5);
+               display: none;
            }
 
            .audio-controls {
@@ -236,7 +234,7 @@
                }
 
                // Update time since last meeting
-               const lastMeeting = new Date('2024-01-03T10:48:00+01:00');
+               const lastMeeting = new Date('2025-01-03T10:48:00+01:00');
                const timeSinceLast = now - lastMeeting;
                
                const daysSince = Math.floor(timeSinceLast / (1000 * 60 * 60 * 24));
