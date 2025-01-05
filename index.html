@@ -171,6 +171,18 @@
                color: #ff9ecd;
                font-weight: 600;
            }
+
+           .time-since {
+               font-size: 1.2rem;
+               color: rgba(255, 255, 255, 0.8);
+               text-align: center;
+               margin-top: 1rem;
+               font-family: 'Montserrat', sans-serif;
+           }
+
+           .audio-controls {
+               display: none;
+           }
        </style>
    </head>
    <body>
@@ -178,8 +190,10 @@
        <div class="hearts" id="hearts"></div>
 
        <div id="countdown">
-           Widzimy się już za: <span id="timer">...</span>
+           Za ile się widzimy?
+           <span id="timer">...</span>
            <div class="quote" id="quote"></div>
+           <div class="time-since" id="timeSince"></div>
        </div>
 
        <div id="progressContainer" class="progress-container">
@@ -220,6 +234,18 @@
                } else {
                    document.getElementById('quote').innerHTML = '';
                }
+
+               // Update time since last meeting
+               const lastMeeting = new Date('2024-01-03T10:48:00+01:00');
+               const timeSinceLast = now - lastMeeting;
+               
+               const daysSince = Math.floor(timeSinceLast / (1000 * 60 * 60 * 24));
+               const hoursSince = Math.floor((timeSinceLast % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+               const minutesSince = Math.floor((timeSinceLast % (1000 * 60 * 60)) / (1000 * 60));
+               const secondsSince = Math.floor((timeSinceLast % (1000 * 60)) / 1000);
+
+               const timeSinceText = `Od ostatniego spotkania minęło: ${daysSince} dni ${hoursSince} godzin ${minutesSince} minut ${secondsSince} sekund`;
+               document.getElementById('timeSince').textContent = timeSinceText;
            }
 
            // Create floating hearts
