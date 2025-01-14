@@ -1,0 +1,26 @@
+{
+  "name": "zailesiewidzi",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "preview": "npx vite preview"
+  },
+  "dependencies": {
+    "@jaredreisinger/react-crossword": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "^6.21.1",
+    "animejs": "latest"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "@tailwindcss/forms": "latest",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "vite": "latest"
+  }
+}
