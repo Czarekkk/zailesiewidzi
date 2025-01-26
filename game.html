@@ -95,15 +95,6 @@
             font-weight: 600;
         }
 
-        .coming-soon {
-            font-size: 0.8rem;
-            background: #ff6b6b;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 10px;
-            margin-left: 10px;
-        }
-
         .rules {
             text-align: left;
             margin: 20px 0;
@@ -111,7 +102,10 @@
         }
 
         .highscores {
-            margin-top: 20px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
         }
 
         .score-item {
@@ -119,6 +113,14 @@
             padding: 10px;
             margin: 5px 0;
             border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-name {
+            font-weight: 600;
+            color: #ff9ecd;
         }
 
         input {
@@ -129,10 +131,15 @@
             border-radius: 5px;
             margin: 10px 0;
             font-family: 'Montserrat', sans-serif;
+            width: 200px;
         }
 
         input::placeholder {
             color: rgba(255, 255, 255, 0.5);
+        }
+
+        #leaderboard {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -142,12 +149,12 @@
     <div class="container">
         <!-- Mode Selection Screen -->
         <div id="modeScreen" class="screen active">
-            <h1>Wybierz tryb gry</h1>
-            <button onclick="showRules('single')">Gra jednoosobowa</button>
-            <button onclick="alert('Tryb wieloosobowy już wkrótce!')">
-                Gra wieloosobowa
-                <span class="coming-soon">WKRÓTCE</span>
-            </button>
+            <h1>Gra w serduszka</h1>
+            <div class="highscores">
+                <h3>Najlepsze wyniki:</h3>
+                <div id="leaderboard"></div>
+            </div>
+            <button onclick="showRules()">Rozpocznij grę</button>
         </div>
 
         <!-- Rules Screen -->
@@ -155,9 +162,9 @@
             <h2>Zasady gry</h2>
             <div class="rules">
                 <p>🎯 Klikaj w serduszko jak najszybciej!</p>
-                <p>⏱️ Masz 30 sekund</p>
-                <p>💝 Z każdym kliknięciem serduszko rośnie</p>
-                <p>🏆 Im więcej kliknięć, tym wyższy wynik</p>
+                <p>⏱️ Masz tylko 10 sekund</p>
+                <p>💝 Z każdym kliknięciem zdobywasz punkt</p>
+                <p>🏆 Spróbuj pobić rekord!</p>
             </div>
             <button onclick="startGame()">GRAJ!</button>
         </div>
@@ -166,7 +173,7 @@
         <div id="gameScreen" class="screen">
             <div class="stats">
                 <div>Wynik: <span id="score">0</span></div>
-                <div>Czas: <span id="time">30</span>s</div>
+                <div>Czas: <span id="time">10</span>s</div>
             </div>
             <div id="heart" class="heart" onclick="tap()">❤️</div>
         </div>
@@ -175,38 +182,54 @@
         <div id="endScreen" class="screen">
             <h2>Koniec gry!</h2>
             <p>Twój wynik: <span id="finalScore">0</span></p>
-            <input type="text" id="playerName" placeholder="Wpisz swoje imię">
+            <input type="text" id="playerName" placeholder="Wpisz swoje imię" maxlength="20">
             <button onclick="saveScore()">Zapisz wynik</button>
-            <div class="highscores">
-                <h3>Najlepsze wyniki:</h3>
-                <div id="highscoresList"></div>
-            </div>
             <button onclick="showScreen('modeScreen')">Zagraj ponownie</button>
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDs8E_Ew4wlm_d2UYbXGPbYbW41NusNz2c",
+            authDomain: "zailesiewidzi-my.firebaseapp.com",
+            databaseURL: "https://zailesiewidzi-my-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "zailesiewidzi-my",
+            storageBucket: "zailesiewidzi-my.firebasestorage.app",
+            messagingSenderId: "315325217199",
+            appId: "1:315325217199:web:ae62f06ecb75792bcad75a"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         let currentScore = 0;
-        let timeLeft = 30;
+        let timeLeft = 10;
         let gameInterval;
         let heartSize = 100;
-        let highscores = JSON.parse(localStorage.getItem('heartGameHighscores')) || [];
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+            if (screenId === 'modeScreen') {
+                loadHighScores();
+            }
         }
 
-        function showRules(mode) {
+        function showRules() {
             showScreen('rulesScreen');
         }
 
         function startGame() {
             currentScore = 0;
-            timeLeft = 30;
+            timeLeft = 10;
             heartSize = 100;
             document.getElementById('score').textContent = '0';
-            document.getElementById('time').textContent = '30';
+            document.getElementById('time').textContent = '10';
             document.getElementById('heart').style.fontSize = '100px';
             showScreen('gameScreen');
             
@@ -223,8 +246,19 @@
             if (timeLeft > 0) {
                 currentScore++;
                 document.getElementById('score').textContent = currentScore;
-                heartSize = Math.min(heartSize + 5, 300);
+                heartSize = Math.min(heartSize + 2, 200);
                 document.getElementById('heart').style.fontSize = heartSize + 'px';
+                
+                // Add heart animation
+                const heart = document.createElement('div');
+                heart.innerHTML = '❤️';
+                heart.style.position = 'absolute';
+                heart.style.left = Math.random() * 80 + 10 + '%';
+                heart.style.top = Math.random() * 80 + 10 + '%';
+                heart.style.fontSize = '20px';
+                heart.style.animation = 'fadeOut 1s forwards';
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 1000);
             }
         }
 
@@ -232,34 +266,70 @@
             clearInterval(gameInterval);
             document.getElementById('finalScore').textContent = currentScore;
             showScreen('endScreen');
-            displayHighscores();
         }
 
         function saveScore() {
             const name = document.getElementById('playerName').value.trim();
-            if (!name) return;
+            if (!name) {
+                alert('Proszę wpisać imię!');
+                return;
+            }
 
             const newScore = {
                 name: name,
                 score: currentScore,
-                date: new Date().toISOString()
+                timestamp: Date.now()
             };
 
-            highscores.push(newScore);
-            highscores.sort((a, b) => b.score - a.score);
-            highscores = highscores.slice(0, 10); // Keep only top 10
-
-            localStorage.setItem('heartGameHighscores', JSON.stringify(highscores));
-            displayHighscores();
-            document.getElementById('playerName').value = '';
+            database.ref('scores').push(newScore)
+                .then(() => {
+                    document.getElementById('playerName').value = '';
+                    showScreen('modeScreen');
+                })
+                .catch(error => console.error('Error saving score:', error));
         }
 
-        function displayHighscores() {
-            const list = document.getElementById('highscoresList');
-            list.innerHTML = highscores
-                .map(score => `<div class="score-item">${score.name}: ${score.score}</div>`)
-                .join('');
+        function loadHighScores() {
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = 'Ładowanie wyników...';
+
+            database.ref('scores')
+                .orderByChild('score')
+                .limitToLast(10)
+                .on('value', (snapshot) => {
+                    const scores = [];
+                    snapshot.forEach((childSnapshot) => {
+                        scores.push(childSnapshot.val());
+                    });
+
+                    scores.sort((a, b) => b.score - a.score);
+                    
+                    leaderboard.innerHTML = scores
+                        .map((score, index) => `
+                            <div class="score-item">
+                                <span class="score-name">${index + 1}. ${score.name}</span>
+                                <span>${score.score} pkt</span>
+                            </div>
+                        `)
+                        .join('');
+                });
         }
+
+        // Load high scores when page loads
+        loadHighScores();
     </script>
+
+    <style>
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: scale(2) translateY(-20px);
+            }
+        }
+    </style>
 </body>
 </html> 
