@@ -593,8 +593,26 @@
                             
                             showScreen('endScreen');
                             
-                            // Cleanup after showing results
-                            return database.ref(`games/${gameId}`).remove();
+                            // Update game status to 'ended' first
+                            return database.ref(`games/${gameId}`).update({
+                                status: 'ended',
+                                player1Score: player1Score,
+                                player2Score: player2Score,
+                                winner: winner
+                            });
+                        })
+                        .then(() => {
+                            // Wait 5 seconds before cleanup to ensure both players see the results
+                            return new Promise(resolve => setTimeout(resolve, 5000));
+                        })
+                        .then(() => {
+                            // Check if game still exists and clean up
+                            return database.ref(`games/${gameId}`).once('value');
+                        })
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                return database.ref(`games/${gameId}`).remove();
+                            }
                         })
                         .then(() => {
                             console.log("Game data cleaned up successfully");
