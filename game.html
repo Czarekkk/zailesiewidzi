@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gra w serduszka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #2c1338, #4a1942);
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #ff9ecd;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: rgba(255, 158, 205, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 158, 205, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .screen {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        button {
+            background: rgba(255, 158, 205, 0.2);
+            border: 1px solid rgba(255, 158, 205, 0.3);
+            color: #ff9ecd;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 158, 205, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .heart {
+            font-size: 100px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            user-select: none;
+        }
+
+        .heart:active {
+            transform: scale(0.95);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .coming-soon {
+            font-size: 0.8rem;
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+
+        .rules {
+            text-align: left;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .highscores {
+            margin-top: 20px;
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← Powrót</a>
+
+    <div class="container">
+        <!-- Mode Selection Screen -->
+        <div id="modeScreen" class="screen active">
+            <h1>Wybierz tryb gry</h1>
+            <button onclick="showRules('single')">Gra jednoosobowa</button>
+            <button onclick="alert('Tryb wieloosobowy już wkrótce!')">
+                Gra wieloosobowa
+                <span class="coming-soon">WKRÓTCE</span>
+            </button>
+        </div>
+
+        <!-- Rules Screen -->
+        <div id="rulesScreen" class="screen">
+            <h2>Zasady gry</h2>
+            <div class="rules">
+                <p>🎯 Klikaj w serduszko jak najszybciej!</p>
+                <p>⏱️ Masz 30 sekund</p>
+                <p>💝 Z każdym kliknięciem serduszko rośnie</p>
+                <p>🏆 Im więcej kliknięć, tym wyższy wynik</p>
+            </div>
+            <button onclick="startGame()">GRAJ!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="stats">
+                <div>Wynik: <span id="score">0</span></div>
+                <div>Czas: <span id="time">30</span>s</div>
+            </div>
+            <div id="heart" class="heart" onclick="tap()">❤️</div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="endScreen" class="screen">
+            <h2>Koniec gry!</h2>
+            <p>Twój wynik: <span id="finalScore">0</span></p>
+            <input type="text" id="playerName" placeholder="Wpisz swoje imię">
+            <button onclick="saveScore()">Zapisz wynik</button>
+            <div class="highscores">
+                <h3>Najlepsze wyniki:</h3>
+                <div id="highscoresList"></div>
+            </div>
+            <button onclick="showScreen('modeScreen')">Zagraj ponownie</button>
+        </div>
+    </div>
+
+    <script>
+        let currentScore = 0;
+        let timeLeft = 30;
+        let gameInterval;
+        let heartSize = 100;
+        let highscores = JSON.parse(localStorage.getItem('heartGameHighscores')) || [];
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showRules(mode) {
+            showScreen('rulesScreen');
+        }
+
+        function startGame() {
+            currentScore = 0;
+            timeLeft = 30;
+            heartSize = 100;
+            document.getElementById('score').textContent = '0';
+            document.getElementById('time').textContent = '30';
+            document.getElementById('heart').style.fontSize = '100px';
+            showScreen('gameScreen');
+            
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('time').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function tap() {
+            if (timeLeft > 0) {
+                currentScore++;
+                document.getElementById('score').textContent = currentScore;
+                heartSize = Math.min(heartSize + 5, 300);
+                document.getElementById('heart').style.fontSize = heartSize + 'px';
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            document.getElementById('finalScore').textContent = currentScore;
+            showScreen('endScreen');
+            displayHighscores();
+        }
+
+        function saveScore() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return;
+
+            const newScore = {
+                name: name,
+                score: currentScore,
+                date: new Date().toISOString()
+            };
+
+            highscores.push(newScore);
+            highscores.sort((a, b) => b.score - a.score);
+            highscores = highscores.slice(0, 10); // Keep only top 10
+
+            localStorage.setItem('heartGameHighscores', JSON.stringify(highscores));
+            displayHighscores();
+            document.getElementById('playerName').value = '';
+        }
+
+        function displayHighscores() {
+            const list = document.getElementById('highscoresList');
+            list.innerHTML = highscores
+                .map(score => `<div class="score-item">${score.name}: ${score.score}</div>`)
+                .join('');
+        }
+    </script>
+</body>
+</html> 
