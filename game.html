@@ -264,6 +264,7 @@
         let gameId = null;
         let localPlayerName = null;
         let remotePlayerName = null;
+        let scoreListener = null;  // Add this to track the score listener
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -343,7 +344,8 @@
                     console.log("New game created successfully");
                     
                     // Listen for opponent
-                    database.ref(`games/${gameId}`).on('value', snapshot => {
+                    const gameRef = database.ref(`games/${gameId}`);
+                    gameRef.on('value', snapshot => {
                         const game = snapshot.val();
                         if (!game) {
                             console.log("Game data not found");
@@ -351,13 +353,14 @@
                         }
                         
                         console.log("Game update received:", game);
-                        if (game.player2) {
+                        if (game.player2 && game.status === 'ready') {
                             remotePlayerName = game.player2.name;
                             console.log(`Opponent joined: ${remotePlayerName}`);
                             document.getElementById('remotePlayerName').textContent = remotePlayerName;
                             document.getElementById('waitingMessage').style.display = 'none';
                             document.getElementById('opponentName').textContent = remotePlayerName;
                             document.getElementById('foundMessage').style.display = 'block';
+                            gameRef.off('value');  // Remove this listener
                             startCountdown();
                         }
                     }, error => {
@@ -441,8 +444,13 @@
                     document.getElementById('singleplayerResult').style.display = 'none';
                     document.getElementById('multiplayerResult').style.display = 'block';
                     
-                    // Listen for opponent's score
-                    database.ref(`games/${gameId}`).on('value', snapshot => {
+                    // Remove any existing score listener
+                    if (scoreListener) {
+                        database.ref(`games/${gameId}`).off('value', scoreListener);
+                    }
+                    
+                    // Set up new score listener
+                    scoreListener = database.ref(`games/${gameId}`).on('value', snapshot => {
                         const game = snapshot.val();
                         if (!game) {
                             console.log("Game data not found during score update");
@@ -456,8 +464,6 @@
                             (game.player1 ? game.player1.score : 0);
                         console.log(`Updating remote score: ${remoteScore}`);
                         document.getElementById('remoteScore').textContent = remoteScore;
-                    }, error => {
-                        console.error("Error listening for score updates:", error);
                     });
                 } else {
                     document.querySelector('.multiplayer-stats').style.display = 'none';
@@ -467,6 +473,7 @@
                 }
                 
                 document.getElementById('score').textContent = '0';
+                document.getElementById('localScore').textContent = '0';
                 document.getElementById('time').textContent = '10';
                 document.getElementById('heart').style.fontSize = '100px';
                 showScreen('gameScreen');
@@ -526,6 +533,13 @@
                 
                 if (isMultiplayer) {
                     console.log(`Getting final scores for game ${gameId}`);
+                    
+                    // Remove score listener
+                    if (scoreListener) {
+                        database.ref(`games/${gameId}`).off('value', scoreListener);
+                        scoreListener = null;
+                    }
+                    
                     database.ref(`games/${gameId}`).once('value', snapshot => {
                         const game = snapshot.val();
                         if (!game) {
