@@ -567,46 +567,51 @@
                         scoreListener = null;
                     }
                     
-                    database.ref(`games/${gameId}`).once('value', snapshot => {
-                        const game = snapshot.val();
-                        if (!game) {
-                            console.error("Game data not found at end");
-                            return;
-                        }
-                        
-                        console.log("Final game state:", game);
-                        const player1Score = game.player1.score;
-                        const player2Score = game.player2.score;
-                        console.log(`Final scores - Player 1: ${player1Score}, Player 2: ${player2Score}`);
-                        
-                        const winner = player1Score > player2Score ? game.player1.name : 
-                                     player2Score > player1Score ? game.player2.name : 'Remis';
-                        
-                        if (winner === 'Remis') {
-                            document.getElementById('winnerMessage').textContent = "Remis! Kochacie się tak samo mocno!";
-                        } else {
-                            document.getElementById('winnerMessage').textContent = 
-                                `${winner} wygrał! Czyli wiemy kto bardziej kocha...`;
-                        }
-                        
-                        // Cleanup
-                        console.log("Cleaning up game data");
-                        database.ref(`games/${gameId}`).remove()
-                            .then(() => console.log("Game data cleaned up successfully"))
-                            .catch(error => console.error("Error cleaning up game data:", error));
-                        
-                        isMultiplayer = false;
-                        gameId = null;
-                    }, error => {
-                        console.error("Error getting final game state:", error);
-                    });
+                    // Get final scores and show winner before cleanup
+                    database.ref(`games/${gameId}`).once('value')
+                        .then(snapshot => {
+                            const game = snapshot.val();
+                            if (!game) {
+                                console.error("Game data not found at end");
+                                return;
+                            }
+                            
+                            console.log("Final game state:", game);
+                            const player1Score = game.player1.score || 0;
+                            const player2Score = game.player2.score || 0;
+                            console.log(`Final scores - Player 1: ${player1Score}, Player 2: ${player2Score}`);
+                            
+                            const winner = player1Score > player2Score ? game.player1.name : 
+                                         player2Score > player1Score ? game.player2.name : 'Remis';
+                            
+                            if (winner === 'Remis') {
+                                document.getElementById('winnerMessage').textContent = "Remis! Kochacie się tak samo mocno!";
+                            } else {
+                                document.getElementById('winnerMessage').textContent = 
+                                    `${winner} wygrał! Czyli wiemy kto bardziej kocha...`;
+                            }
+                            
+                            showScreen('endScreen');
+                            
+                            // Cleanup after showing results
+                            return database.ref(`games/${gameId}`).remove();
+                        })
+                        .then(() => {
+                            console.log("Game data cleaned up successfully");
+                            isMultiplayer = false;
+                            gameId = null;
+                        })
+                        .catch(error => {
+                            console.error("Error in endGame:", error);
+                            showScreen('endScreen'); // Show end screen even if there's an error
+                        });
                 } else {
                     document.getElementById('finalScore').textContent = currentScore;
+                    showScreen('endScreen');
                 }
-                
-                showScreen('endScreen');
             } catch (error) {
                 console.error("Error in endGame:", error);
+                showScreen('endScreen'); // Show end screen even if there's an error
             }
         }
 
