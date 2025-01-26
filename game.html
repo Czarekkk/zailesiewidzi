@@ -279,79 +279,136 @@
 
         function startMultiplayer() {
             const name = prompt("Podaj swoje imię:");
-            if (!name) return;
+            if (!name) {
+                console.error("Multiplayer error: No name provided");
+                return;
+            }
             
-            localPlayerName = name;
-            document.getElementById('localPlayerName').textContent = name;
-            
-            showScreen('multiplayerWaitingScreen');
-            findMatch();
+            try {
+                localPlayerName = name;
+                document.getElementById('localPlayerName').textContent = name;
+                console.log(`Starting multiplayer game for player: ${name}`);
+                showScreen('multiplayerWaitingScreen');
+                findMatch();
+            } catch (error) {
+                console.error("Error in startMultiplayer:", error);
+            }
         }
 
         function findMatch() {
-            // Look for available game
-            database.ref('games').once('value', snapshot => {
-                let gameFound = false;
-                snapshot.forEach(childSnapshot => {
-                    const game = childSnapshot.val();
-                    if (game.status === 'waiting') {
-                        gameFound = true;
-                        gameId = childSnapshot.key;
-                        joinGame(gameId);
-                        return true;
-                    }
-                });
+            console.log("Looking for available game...");
+            try {
+                database.ref('games').once('value', snapshot => {
+                    let gameFound = false;
+                    snapshot.forEach(childSnapshot => {
+                        const game = childSnapshot.val();
+                        console.log("Checking game:", childSnapshot.key, game);
+                        if (game && game.status === 'waiting') {
+                            gameFound = true;
+                            gameId = childSnapshot.key;
+                            console.log(`Found existing game: ${gameId}`);
+                            joinGame(gameId);
+                            return true;
+                        }
+                    });
 
-                if (!gameFound) {
-                    createNewGame();
-                }
-            });
+                    if (!gameFound) {
+                        console.log("No available games found, creating new game");
+                        createNewGame();
+                    }
+                }, error => {
+                    console.error("Error finding match:", error);
+                });
+            } catch (error) {
+                console.error("Error in findMatch:", error);
+            }
         }
 
         function createNewGame() {
-            const newGameRef = database.ref('games').push();
-            gameId = newGameRef.key;
-            newGameRef.set({
-                player1: {
-                    name: localPlayerName,
-                    score: 0
-                },
-                status: 'waiting',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
+            try {
+                const newGameRef = database.ref('games').push();
+                gameId = newGameRef.key;
+                console.log(`Creating new game with ID: ${gameId}`);
+                
+                const gameData = {
+                    player1: {
+                        name: localPlayerName,
+                        score: 0
+                    },
+                    status: 'waiting',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
 
-            // Listen for opponent
-            database.ref(`games/${gameId}`).on('value', snapshot => {
-                const game = snapshot.val();
-                if (game.player2) {
-                    remotePlayerName = game.player2.name;
-                    document.getElementById('remotePlayerName').textContent = remotePlayerName;
-                    document.getElementById('waitingMessage').style.display = 'none';
-                    document.getElementById('opponentName').textContent = remotePlayerName;
-                    document.getElementById('foundMessage').style.display = 'block';
-                    startCountdown();
-                }
-            });
+                newGameRef.set(gameData).then(() => {
+                    console.log("New game created successfully");
+                    
+                    // Listen for opponent
+                    database.ref(`games/${gameId}`).on('value', snapshot => {
+                        const game = snapshot.val();
+                        if (!game) {
+                            console.log("Game data not found");
+                            return;
+                        }
+                        
+                        console.log("Game update received:", game);
+                        if (game.player2) {
+                            remotePlayerName = game.player2.name;
+                            console.log(`Opponent joined: ${remotePlayerName}`);
+                            document.getElementById('remotePlayerName').textContent = remotePlayerName;
+                            document.getElementById('waitingMessage').style.display = 'none';
+                            document.getElementById('opponentName').textContent = remotePlayerName;
+                            document.getElementById('foundMessage').style.display = 'block';
+                            startCountdown();
+                        }
+                    }, error => {
+                        console.error("Error listening for opponent:", error);
+                    });
+                }).catch(error => {
+                    console.error("Error creating new game:", error);
+                });
+            } catch (error) {
+                console.error("Error in createNewGame:", error);
+            }
         }
 
         function joinGame(gameId) {
-            database.ref(`games/${gameId}`).update({
-                player2: {
-                    name: localPlayerName,
-                    score: 0
-                },
-                status: 'ready'
-            });
+            try {
+                console.log(`Joining game: ${gameId}`);
+                const updates = {
+                    player2: {
+                        name: localPlayerName,
+                        score: 0
+                    },
+                    status: 'ready'
+                };
 
-            // Get opponent's name
-            database.ref(`games/${gameId}/player1`).once('value', snapshot => {
-                remotePlayerName = snapshot.val().name;
-                document.getElementById('remotePlayerName').textContent = remotePlayerName;
-                document.getElementById('waitingMessage').style.display = 'none';
-                document.getElementById('opponentName').textContent = remotePlayerName;
-                document.getElementById('foundMessage').style.display = 'block';
-                startCountdown();
-            });
+                database.ref(`games/${gameId}`).update(updates).then(() => {
+                    console.log("Successfully joined game");
+                    
+                    // Get opponent's name
+                    database.ref(`games/${gameId}/player1`).once('value', snapshot => {
+                        const player1Data = snapshot.val();
+                        if (!player1Data) {
+                            console.error("Player 1 data not found");
+                            return;
+                        }
+                        
+                        remotePlayerName = player1Data.name;
+                        console.log(`Got opponent's name: ${remotePlayerName}`);
+                        document.getElementById('remotePlayerName').textContent = remotePlayerName;
+                        document.getElementById('waitingMessage').style.display = 'none';
+                        document.getElementById('opponentName').textContent = remotePlayerName;
+                        document.getElementById('foundMessage').style.display = 'block';
+                        startCountdown();
+                    }, error => {
+                        console.error("Error getting opponent's name:", error);
+                    });
+                }).catch(error => {
+                    console.error("Error joining game:", error);
+                });
+            } catch (error) {
+                console.error("Error in joinGame:", error);
+            }
         }
 
         function startCountdown() {
@@ -371,100 +428,145 @@
         }
 
         function startGame() {
-            currentScore = 0;
-            timeLeft = 10;
-            heartSize = 100;
-            
-            if (isMultiplayer) {
-                document.querySelector('.multiplayer-stats').style.display = 'flex';
-                document.querySelector('.singleplayer-heart').style.display = 'none';
-                document.getElementById('singleplayerResult').style.display = 'none';
-                document.getElementById('multiplayerResult').style.display = 'block';
-            } else {
-                document.querySelector('.multiplayer-stats').style.display = 'none';
-                document.querySelector('.singleplayer-heart').style.display = 'block';
-                document.getElementById('singleplayerResult').style.display = 'block';
-                document.getElementById('multiplayerResult').style.display = 'none';
-            }
-            
-            document.getElementById('score').textContent = '0';
-            document.getElementById('time').textContent = '10';
-            document.getElementById('heart').style.fontSize = '100px';
-            showScreen('gameScreen');
-            
-            if (isMultiplayer) {
-                // Listen for opponent's score
-                database.ref(`games/${gameId}`).on('value', snapshot => {
-                    const game = snapshot.val();
-                    const isPlayer1 = game.player1.name === localPlayerName;
-                    const remoteScore = isPlayer1 ? game.player2.score : game.player1.score;
-                    document.getElementById('remoteScore').textContent = remoteScore;
-                });
-            }
-            
-            gameInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('time').textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    endGame();
+            try {
+                currentScore = 0;
+                timeLeft = 10;
+                heartSize = 100;
+                
+                console.log(`Starting game. Multiplayer: ${isMultiplayer}`);
+                
+                if (isMultiplayer) {
+                    document.querySelector('.multiplayer-stats').style.display = 'flex';
+                    document.querySelector('.singleplayer-heart').style.display = 'none';
+                    document.getElementById('singleplayerResult').style.display = 'none';
+                    document.getElementById('multiplayerResult').style.display = 'block';
+                    
+                    // Listen for opponent's score
+                    database.ref(`games/${gameId}`).on('value', snapshot => {
+                        const game = snapshot.val();
+                        if (!game) {
+                            console.log("Game data not found during score update");
+                            return;
+                        }
+                        
+                        console.log("Received game update:", game);
+                        const isPlayer1 = game.player1.name === localPlayerName;
+                        const remoteScore = isPlayer1 ? 
+                            (game.player2 ? game.player2.score : 0) : 
+                            (game.player1 ? game.player1.score : 0);
+                        console.log(`Updating remote score: ${remoteScore}`);
+                        document.getElementById('remoteScore').textContent = remoteScore;
+                    }, error => {
+                        console.error("Error listening for score updates:", error);
+                    });
+                } else {
+                    document.querySelector('.multiplayer-stats').style.display = 'none';
+                    document.querySelector('.singleplayer-heart').style.display = 'block';
+                    document.getElementById('singleplayerResult').style.display = 'block';
+                    document.getElementById('multiplayerResult').style.display = 'none';
                 }
-            }, 1000);
+                
+                document.getElementById('score').textContent = '0';
+                document.getElementById('time').textContent = '10';
+                document.getElementById('heart').style.fontSize = '100px';
+                showScreen('gameScreen');
+                
+                gameInterval = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('time').textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error("Error in startGame:", error);
+            }
         }
 
         function tap() {
-            if (timeLeft > 0) {
-                currentScore++;
-                document.getElementById('score').textContent = currentScore;
-                document.getElementById('localScore').textContent = currentScore;
-                
-                if (isMultiplayer) {
-                    // Update score in Firebase
-                    const isPlayer1 = localPlayerName === document.getElementById('localPlayerName').textContent;
-                    const playerPath = isPlayer1 ? 'player1' : 'player2';
-                    database.ref(`games/${gameId}/${playerPath}/score`).set(currentScore);
+            try {
+                if (timeLeft > 0) {
+                    currentScore++;
+                    console.log(`Score updated: ${currentScore}`);
+                    document.getElementById('score').textContent = currentScore;
+                    document.getElementById('localScore').textContent = currentScore;
+                    
+                    if (isMultiplayer) {
+                        // Update score in Firebase
+                        const isPlayer1 = localPlayerName === document.getElementById('localPlayerName').textContent;
+                        const playerPath = isPlayer1 ? 'player1' : 'player2';
+                        console.log(`Updating score for ${playerPath}:`, currentScore);
+                        
+                        database.ref(`games/${gameId}/${playerPath}/score`).set(currentScore)
+                            .catch(error => {
+                                console.error("Error updating score in Firebase:", error);
+                            });
+                    }
+                    
+                    // Add heart animation
+                    const heart = document.createElement('div');
+                    heart.innerHTML = '❤️';
+                    heart.style.position = 'absolute';
+                    heart.style.left = Math.random() * 80 + 10 + '%';
+                    heart.style.top = Math.random() * 80 + 10 + '%';
+                    heart.style.fontSize = '20px';
+                    heart.style.animation = 'fadeOut 1s forwards';
+                    document.body.appendChild(heart);
+                    setTimeout(() => heart.remove(), 1000);
                 }
-                
-                // Add heart animation
-                const heart = document.createElement('div');
-                heart.innerHTML = '❤️';
-                heart.style.position = 'absolute';
-                heart.style.left = Math.random() * 80 + 10 + '%';
-                heart.style.top = Math.random() * 80 + 10 + '%';
-                heart.style.fontSize = '20px';
-                heart.style.animation = 'fadeOut 1s forwards';
-                document.body.appendChild(heart);
-                setTimeout(() => heart.remove(), 1000);
+            } catch (error) {
+                console.error("Error in tap function:", error);
             }
         }
 
         function endGame() {
-            clearInterval(gameInterval);
-            
-            if (isMultiplayer) {
-                database.ref(`games/${gameId}`).once('value', snapshot => {
-                    const game = snapshot.val();
-                    const player1Score = game.player1.score;
-                    const player2Score = game.player2.score;
-                    const winner = player1Score > player2Score ? game.player1.name : 
-                                 player2Score > player1Score ? game.player2.name : 'Remis';
-                    
-                    if (winner === 'Remis') {
-                        document.getElementById('winnerMessage').textContent = "Remis! Kochacie się tak samo mocno!";
-                    } else {
-                        document.getElementById('winnerMessage').textContent = 
-                            `${winner} wygrał! Czyli wiemy kto bardziej kocha...`;
-                    }
-                    
-                    // Cleanup
-                    database.ref(`games/${gameId}`).remove();
-                    isMultiplayer = false;
-                    gameId = null;
-                });
-            } else {
-                document.getElementById('finalScore').textContent = currentScore;
+            try {
+                clearInterval(gameInterval);
+                console.log("Game ended");
+                
+                if (isMultiplayer) {
+                    console.log(`Getting final scores for game ${gameId}`);
+                    database.ref(`games/${gameId}`).once('value', snapshot => {
+                        const game = snapshot.val();
+                        if (!game) {
+                            console.error("Game data not found at end");
+                            return;
+                        }
+                        
+                        console.log("Final game state:", game);
+                        const player1Score = game.player1.score;
+                        const player2Score = game.player2.score;
+                        console.log(`Final scores - Player 1: ${player1Score}, Player 2: ${player2Score}`);
+                        
+                        const winner = player1Score > player2Score ? game.player1.name : 
+                                     player2Score > player1Score ? game.player2.name : 'Remis';
+                        
+                        if (winner === 'Remis') {
+                            document.getElementById('winnerMessage').textContent = "Remis! Kochacie się tak samo mocno!";
+                        } else {
+                            document.getElementById('winnerMessage').textContent = 
+                                `${winner} wygrał! Czyli wiemy kto bardziej kocha...`;
+                        }
+                        
+                        // Cleanup
+                        console.log("Cleaning up game data");
+                        database.ref(`games/${gameId}`).remove()
+                            .then(() => console.log("Game data cleaned up successfully"))
+                            .catch(error => console.error("Error cleaning up game data:", error));
+                        
+                        isMultiplayer = false;
+                        gameId = null;
+                    }, error => {
+                        console.error("Error getting final game state:", error);
+                    });
+                } else {
+                    document.getElementById('finalScore').textContent = currentScore;
+                }
+                
+                showScreen('endScreen');
+            } catch (error) {
+                console.error("Error in endGame:", error);
             }
-            
-            showScreen('endScreen');
         }
 
         function saveScore() {
