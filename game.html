@@ -438,7 +438,7 @@
             try {
                 currentScore = 0;
                 timeLeft = 10;
-                heartSize = 100;
+                heartSize = 100;  // Reset heart size
                 
                 if (isMultiplayer) {
                     // Get game data first
@@ -535,6 +535,10 @@
                             .catch(error => {
                                 console.error("Error updating score in Firebase:", error);
                             });
+                    } else {
+                        // Increase heart size in singleplayer mode
+                        heartSize += 5;
+                        document.querySelector('.singleplayer-heart .heart').style.fontSize = `${heartSize}px`;
                     }
                     
                     // Add heart animation
