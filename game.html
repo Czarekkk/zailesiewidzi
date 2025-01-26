@@ -264,7 +264,13 @@
         let gameId = null;
         let localPlayerName = null;
         let remotePlayerName = null;
-        let scoreListener = null;  // Add this to track the score listener
+        let scoreListener = null;
+        let localPlayerId = null;  // Add unique player ID
+        let remotePlayerId = null; // Add remote player ID
+
+        function generatePlayerId() {
+            return 'player_' + Math.random().toString(36).substr(2, 9);
+        }
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
@@ -287,8 +293,9 @@
             
             try {
                 localPlayerName = name;
+                localPlayerId = generatePlayerId();  // Generate unique ID
+                console.log(`Starting multiplayer game for player: ${name} (ID: ${localPlayerId})`);
                 document.getElementById('localPlayerName').textContent = name;
-                console.log(`Starting multiplayer game for player: ${name}`);
                 showScreen('multiplayerWaitingScreen');
                 findMatch();
             } catch (error) {
@@ -329,10 +336,11 @@
             try {
                 const newGameRef = database.ref('games').push();
                 gameId = newGameRef.key;
-                console.log(`Creating new game with ID: ${gameId}`);
+                console.log(`Creating new game with ID: ${gameId} as player 1 (ID: ${localPlayerId})`);
                 
                 const gameData = {
                     player1: {
+                        id: localPlayerId,
                         name: localPlayerName,
                         score: 0
                     },
@@ -355,19 +363,16 @@
                         console.log("Game update received:", game);
                         if (game.player2 && game.status === 'ready') {
                             remotePlayerName = game.player2.name;
-                            console.log(`Opponent joined: ${remotePlayerName}`);
+                            remotePlayerId = game.player2.id;  // Store remote player ID
+                            console.log(`Opponent joined: ${remotePlayerName} (ID: ${remotePlayerId})`);
                             document.getElementById('remotePlayerName').textContent = remotePlayerName;
                             document.getElementById('waitingMessage').style.display = 'none';
                             document.getElementById('opponentName').textContent = remotePlayerName;
                             document.getElementById('foundMessage').style.display = 'block';
-                            gameRef.off('value');  // Remove this listener
+                            gameRef.off('value');
                             startCountdown();
                         }
-                    }, error => {
-                        console.error("Error listening for opponent:", error);
                     });
-                }).catch(error => {
-                    console.error("Error creating new game:", error);
                 });
             } catch (error) {
                 console.error("Error in createNewGame:", error);
@@ -376,9 +381,11 @@
 
         function joinGame(gameId) {
             try {
-                console.log(`Joining game: ${gameId}`);
+                console.log(`Joining game: ${gameId} (ID: ${localPlayerId})`);
+                
                 const updates = {
                     player2: {
+                        id: localPlayerId,
                         name: localPlayerName,
                         score: 0
                     },
@@ -388,7 +395,7 @@
                 database.ref(`games/${gameId}`).update(updates).then(() => {
                     console.log("Successfully joined game");
                     
-                    // Get opponent's name
+                    // Get opponent's info
                     database.ref(`games/${gameId}/player1`).once('value', snapshot => {
                         const player1Data = snapshot.val();
                         if (!player1Data) {
@@ -397,17 +404,14 @@
                         }
                         
                         remotePlayerName = player1Data.name;
-                        console.log(`Got opponent's name: ${remotePlayerName}`);
+                        remotePlayerId = player1Data.id;  // Store remote player ID
+                        console.log(`Got opponent's info: ${remotePlayerName} (ID: ${remotePlayerId})`);
                         document.getElementById('remotePlayerName').textContent = remotePlayerName;
                         document.getElementById('waitingMessage').style.display = 'none';
                         document.getElementById('opponentName').textContent = remotePlayerName;
                         document.getElementById('foundMessage').style.display = 'block';
                         startCountdown();
-                    }, error => {
-                        console.error("Error getting opponent's name:", error);
                     });
-                }).catch(error => {
-                    console.error("Error joining game:", error);
                 });
             } catch (error) {
                 console.error("Error in joinGame:", error);
@@ -436,7 +440,7 @@
                 timeLeft = 10;
                 heartSize = 100;
                 
-                console.log(`Starting game. Multiplayer: ${isMultiplayer}`);
+                console.log(`Starting game. Multiplayer: ${isMultiplayer}, Is Player 1: ${localPlayerId === game.player1.id}`);
                 
                 if (isMultiplayer) {
                     document.querySelector('.multiplayer-stats').style.display = 'flex';
@@ -458,11 +462,12 @@
                         }
                         
                         console.log("Received game update:", game);
-                        const isPlayer1 = game.player1.name === localPlayerName;
-                        const remoteScore = isPlayer1 ? 
+                        // Update remote score based on player ID
+                        const remoteScore = game.player1.id === localPlayerId ? 
                             (game.player2 ? game.player2.score : 0) : 
                             (game.player1 ? game.player1.score : 0);
-                        console.log(`Updating remote score: ${remoteScore}`);
+                        
+                        console.log(`Updating remote score: ${remoteScore} (as ${game.player1.id === localPlayerId ? 'player1' : 'player2'})`);
                         document.getElementById('remoteScore').textContent = remoteScore;
                     });
                 } else {
@@ -499,10 +504,9 @@
                     document.getElementById('localScore').textContent = currentScore;
                     
                     if (isMultiplayer) {
-                        // Update score in Firebase
-                        const isPlayer1 = localPlayerName === document.getElementById('localPlayerName').textContent;
-                        const playerPath = isPlayer1 ? 'player1' : 'player2';
-                        console.log(`Updating score for ${playerPath}:`, currentScore);
+                        // Update score in Firebase based on player ID
+                        const playerPath = game.player1.id === localPlayerId ? 'player1' : 'player2';
+                        console.log(`Updating score for ${playerPath} (ID: ${localPlayerId}): ${currentScore}`);
                         
                         database.ref(`games/${gameId}/${playerPath}/score`).set(currentScore)
                             .catch(error => {
