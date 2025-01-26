@@ -440,36 +440,49 @@
                 timeLeft = 10;
                 heartSize = 100;
                 
-                console.log(`Starting game. Multiplayer: ${isMultiplayer}, Is Player 1: ${localPlayerId === game.player1.id}`);
-                
                 if (isMultiplayer) {
-                    document.querySelector('.multiplayer-stats').style.display = 'flex';
-                    document.querySelector('.singleplayer-heart').style.display = 'none';
-                    document.getElementById('singleplayerResult').style.display = 'none';
-                    document.getElementById('multiplayerResult').style.display = 'block';
-                    
-                    // Remove any existing score listener
-                    if (scoreListener) {
-                        database.ref(`games/${gameId}`).off('value', scoreListener);
-                    }
-                    
-                    // Set up new score listener
-                    scoreListener = database.ref(`games/${gameId}`).on('value', snapshot => {
-                        const game = snapshot.val();
-                        if (!game) {
-                            console.log("Game data not found during score update");
-                            return;
-                        }
-                        
-                        console.log("Received game update:", game);
-                        // Update remote score based on player ID
-                        const remoteScore = game.player1.id === localPlayerId ? 
-                            (game.player2 ? game.player2.score : 0) : 
-                            (game.player1 ? game.player1.score : 0);
-                        
-                        console.log(`Updating remote score: ${remoteScore} (as ${game.player1.id === localPlayerId ? 'player1' : 'player2'})`);
-                        document.getElementById('remoteScore').textContent = remoteScore;
-                    });
+                    // Get game data first
+                    database.ref(`games/${gameId}`).once('value')
+                        .then(snapshot => {
+                            const game = snapshot.val();
+                            if (!game) {
+                                console.error("Game data not found when starting game");
+                                return;
+                            }
+
+                            console.log(`Starting game. Multiplayer: ${isMultiplayer}, Is Player 1: ${game.player1.id === localPlayerId}`);
+                            
+                            document.querySelector('.multiplayer-stats').style.display = 'flex';
+                            document.querySelector('.singleplayer-heart').style.display = 'none';
+                            document.getElementById('singleplayerResult').style.display = 'none';
+                            document.getElementById('multiplayerResult').style.display = 'block';
+                            
+                            // Remove any existing score listener
+                            if (scoreListener) {
+                                database.ref(`games/${gameId}`).off('value', scoreListener);
+                            }
+                            
+                            // Set up new score listener
+                            scoreListener = database.ref(`games/${gameId}`).on('value', snapshot => {
+                                const gameUpdate = snapshot.val();
+                                if (!gameUpdate) {
+                                    console.log("Game data not found during score update");
+                                    return;
+                                }
+                                
+                                console.log("Received game update:", gameUpdate);
+                                // Update remote score based on player ID
+                                const remoteScore = gameUpdate.player1.id === localPlayerId ? 
+                                    (gameUpdate.player2 ? gameUpdate.player2.score : 0) : 
+                                    (gameUpdate.player1 ? gameUpdate.player1.score : 0);
+                                
+                                console.log(`Updating remote score: ${remoteScore} (as ${gameUpdate.player1.id === localPlayerId ? 'player1' : 'player2'})`);
+                                document.getElementById('remoteScore').textContent = remoteScore;
+                            });
+                        })
+                        .catch(error => {
+                            console.error("Error getting game data:", error);
+                        });
                 } else {
                     document.querySelector('.multiplayer-stats').style.display = 'none';
                     document.querySelector('.singleplayer-heart').style.display = 'block';
@@ -504,11 +517,21 @@
                     document.getElementById('localScore').textContent = currentScore;
                     
                     if (isMultiplayer) {
-                        // Update score in Firebase based on player ID
-                        const playerPath = game.player1.id === localPlayerId ? 'player1' : 'player2';
-                        console.log(`Updating score for ${playerPath} (ID: ${localPlayerId}): ${currentScore}`);
-                        
-                        database.ref(`games/${gameId}/${playerPath}/score`).set(currentScore)
+                        // Get current game data to determine player path
+                        database.ref(`games/${gameId}`).once('value')
+                            .then(snapshot => {
+                                const game = snapshot.val();
+                                if (!game) {
+                                    console.error("Game data not found when updating score");
+                                    return;
+                                }
+                                
+                                // Update score in Firebase based on player ID
+                                const playerPath = game.player1.id === localPlayerId ? 'player1' : 'player2';
+                                console.log(`Updating score for ${playerPath} (ID: ${localPlayerId}): ${currentScore}`);
+                                
+                                return database.ref(`games/${gameId}/${playerPath}/score`).set(currentScore);
+                            })
                             .catch(error => {
                                 console.error("Error updating score in Firebase:", error);
                             });
